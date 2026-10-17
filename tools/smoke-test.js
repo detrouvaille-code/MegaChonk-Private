@@ -122,7 +122,7 @@ const captureScreenshot = require("./capture-screenshot");
       window.__megaChonk.state.forcedAction = null;
       window.__megaChonk.state.actionTime = 0;
     });
-    await page.waitForTimeout(5300);
+    await page.waitForFunction(() => window.__megaChonk.state.idleTime > 5.1, null, { timeout: 15000 });
     const groomed = await page.evaluate(() => window.__megaChonk.snapshot());
     await captureScreenshot(page, {
       path: path.join(root, "assets", "previews", "mega-chonk-gameplay.png"),
@@ -161,7 +161,7 @@ const captureScreenshot = require("./capture-screenshot");
     if (Math.abs(heavyBlocked.position[1] - heavyBefore.position[1]) > 0.03 || heavyBlocked.jumpAllowed) errors.push("jump:heavy condition did not block the leap");
     if (hungryBlocked.position[1] > 0.03 || hungryBlocked.jumpAllowed) errors.push("jump:hunger condition did not block the leap");
     if (layoutA === layoutB) errors.push("generation:different seeds produced the same collider layout");
-    const expectedFoods = [3, 4, 5];
+    const expectedFoods = [3, 0, 5];
     for (let i = 0; i < levelChecks.length; i += 1) {
       const level = levelChecks[i];
       if (level.level !== i || level.foodsRemaining !== expectedFoods[i]) errors.push(`level:${i + 1} generated incorrect objectives`);

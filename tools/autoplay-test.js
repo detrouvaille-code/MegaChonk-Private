@@ -47,6 +47,8 @@ function makeBlockedTest(navigation, target) {
 
   return (x, z) => {
     if (x < BOUNDS.minX || x > BOUNDS.maxX || z < BOUNDS.minZ || z > BOUNDS.maxZ) return true;
+    const deck = navigation.verticalRoutes[0]?.deck;
+    if (navigationHeight > 2 && deck && (x < deck.minX + 0.2 || x > deck.maxX - 0.2 || z < deck.minZ + 0.2 || z > deck.maxZ - 0.2)) return true;
 
     for (const collider of navigation.colliders) {
       if (collider === targetPlatform || collider === startingPlatform) continue;
@@ -240,6 +242,11 @@ function planRoute(navigation, target) {
         await releaseMovement();
         return { reached: true, navigation: nav, route };
       }
+      if (!options.routeStage && target[1] > 2 && nav.position[1] < 1 && nav.grounded) {
+        await releaseMovement();
+        if ((options.floorRetries ?? 0) >= 2) return { reached: false, navigation: nav, route };
+        return driveTo(target, { ...options, floorRetries: (options.floorRetries ?? 0) + 1 });
+      }
 
       const targetDistance = distance2D(nav.position, target);
       const correctHeight = Math.abs(nav.position[1] - target[1]) < 0.34;
@@ -249,6 +256,14 @@ function planRoute(navigation, target) {
       }
 
       if (nav.bonks !== lastBonks || Date.now() - lastPlan > 4200) {
+        if (nav.bonks !== lastBonks) {
+          // Combat recovery clears held input; resume it as a player would.
+          await page.keyboard.up("w");
+          await page.keyboard.down("w");
+          if (shiftHeld) await page.keyboard.down("Shift");
+          lastMotionAt = Date.now();
+          lastMotionPosition = nav.position;
+        }
         route = options.direct ? [target] : planRoute(nav, target);
         waypointIndex = 0;
         lastPlan = Date.now();
@@ -318,6 +333,40 @@ function planRoute(navigation, target) {
       levelRuns.push(levelRun);
       console.log(`[autoplay] Level ${level + 1} started with ${nav.foods.length} meals`);
 
+      if (nav.rescue && !nav.rescue.freed) {
+        levelRun.guards = [];
+        for (const guard of nav.adventure.enemies.filter((enemy) => enemy.guard && enemy.active)) {
+          const approach = [guard.home[0], 0, guard.home[2] + 2.8];
+          if (!(await driveTo(approach, { level, timeout: 35000, tolerance: 0.3 })).reached) throw new Error(`Could not reach rescue guard ${guard.id}`);
+          const started = Date.now();
+          while (Date.now() - started < 45000) {
+            nav = await navigation();
+            const current = nav.adventure.enemies.find((enemy) => enemy.id === guard.id);
+            if (!current.active) { levelRun.guards.push(guard.id); break; }
+            const dx = nav.position[0] - current.x, dz = nav.position[2] - current.z;
+            const angle = Math.atan2(dx, dz);
+            const blocked = makeBlockedTest(nav, [current.x, 0, current.z]);
+            const attackPosition = [0, 0.52, -0.52, 1.04, -1.04, 1.57, -1.57, 2.1, -2.1, Math.PI]
+              .map((offset) => [current.x + Math.sin(angle + offset) * 1.22, 0, current.z + Math.cos(angle + offset) * 1.22])
+              .find(([x, , z]) => !blocked(x, z));
+            if (!attackPosition) throw new Error(`No clear claw approach to ${guard.id}: ${JSON.stringify(nav)}`);
+            const approachResult = await driveTo(attackPosition, { level, timeout: 35000, tolerance: 0.16 });
+            if (!approachResult.reached) throw new Error(`Could not approach ${guard.id}: ${JSON.stringify(approachResult.navigation)}`);
+            await page.evaluate(([x, z]) => window.__megaChonk.aimAt(x, z), [current.x, current.z]);
+            await page.keyboard.down("w"); await sleep(90); await page.keyboard.up("w");
+            await page.waitForFunction(() => window.__megaChonk.state.attackCooldown === 0, null, { timeout: 5000 });
+            await page.keyboard.press("f");
+            await sleep(350);
+          }
+          if (!levelRun.guards.includes(guard.id)) throw new Error(`Rescue guard fight timed out: ${guard.id}`);
+          console.log(`[autoplay] Defeated ${guard.id} with claw controls`);
+        }
+        await releaseMovement();
+        await page.waitForFunction(() => window.__megaChonk.snapshot().rescue?.freed && window.__megaChonk.navigation().goal.active, null, { timeout: 20000 });
+        levelRun.rescued = true;
+        nav = await navigation();
+      }
+
       while (nav.level === level && nav.foods.length && !nav.gameComplete) {
         const candidates = nav.foods.map((food) => {
           const route = planRoute(nav, food.position);
@@ -385,13 +434,14 @@ function planRoute(navigation, target) {
       path: path.join(root, "assets", "previews", RUN_SEED === 424242 ? "mega-chonk-complete.png" : `mega-chonk-complete-${RUN_SEED}.png`),
     });
 
-    if (finalSnapshot.eaten !== 12) browserErrors.push(`progression:expected 12 meals, got ${finalSnapshot.eaten}`);
+    if (finalSnapshot.eaten !== 8) browserErrors.push(`progression:expected 8 meals, got ${finalSnapshot.eaten}`);
+    if (!finalSnapshot.adventure.orangeCatRescued) browserErrors.push("progression:orange cat was not rescued");
     if (finalSnapshot.level !== 2) browserErrors.push(`progression:expected final level index 2, got ${finalSnapshot.level}`);
-    if (finalSnapshot.xp < 600) browserErrors.push(`progression:expected at least 600 XP, got ${finalSnapshot.xp}`);
+    if (finalSnapshot.xp < 850) browserErrors.push(`progression:expected at least 850 XP including the rescue, got ${finalSnapshot.xp}`);
     if (!finalSnapshot.adventure.bossDefeated) browserErrors.push("progression:vacuum boss was not defeated");
-    if (finalSnapshot.jumps < 3) browserErrors.push(`movement:expected platform jumps, got ${finalSnapshot.jumps}`);
+    if (finalNavigation.jumps < 2) browserErrors.push(`movement:expected jumps in both supper rooms, got ${finalNavigation.jumps}`);
     if (levelRuns.length !== 3) browserErrors.push(`progression:expected 3 level runs, got ${levelRuns.length}`);
-    if (!completionText?.includes("12 meals")) browserErrors.push(`completion:stats were not rendered correctly: ${completionText}`);
+    if (!completionText?.includes("8 meals") || !completionText?.includes("orange cat rescued")) browserErrors.push(`completion:stats were not rendered correctly: ${completionText}`);
     console.log(JSON.stringify({ seed: RUN_SEED, levelRuns, finalSnapshot, completed: finalNavigation.gameComplete, completionText }, null, 2));
   } catch (error) {
     if (page) {

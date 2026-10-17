@@ -84,9 +84,10 @@ const results = [];
       if (navAfter.jumps !== nav.jumps || bottom.position[1] > 0.2) errors.push(`Level ${level + 1}: invalid stair descent`);
       results.push({ level: level + 1, ascent: top.position, descent: bottom.position, mealsUpstairs: nav.foods.filter((food) => food.position[1] > 2).length, startedAt: before.position });
     }
-    await page.evaluate(() => { window.__megaChonk.loadLevel(0); window.__megaChonk.setCondition(5, 95); });
+    await page.evaluate(() => { window.__megaChonk.loadLevel(0); window.__megaChonk.setCondition(5, 95); window.__megaChonk.state.recoveryTime = 60; });
     await place([-7.5, 0, 0.5]);
-    const limitedStairs = await walkTo([-7.5, 2.7, -8.5], 20000);
+    // Isolate stair access from starvation recovery; severe condition walks slowly.
+    const limitedStairs = await walkTo([-7.5, 2.7, -8.5], 30000);
     if (limitedStairs.jumpAllowed || limitedStairs.position[1] < 2.65) errors.push("Stairs are not usable when too hungry/heavy to jump");
     await page.evaluate(() => { window.__megaChonk.loadLevel(0); window.__megaChonk.setCondition(62, 48); });
     const route = (await page.evaluate(() => window.__megaChonk.navigation())).verticalRoutes[0];

@@ -5,6 +5,7 @@
 - `jump-rules.js` is the shared source of truth for pace, jump impulse, gravity, and conservative generation checks. Do not tune a second independent jump formula in the generator.
 - `adventure-rules.js` contains browser-independent run equipment and a boss state machine. `BOSS_DEFINITIONS` controls health/lives, ranges, cones, turning, and timed phases. `BOSS_ATTACKS` maps an attack ID to effects; `BOSS_WEAK_POINTS` maps a vulnerability ID to hit conditions, without Three.js operations.
 - `adventure-world.js` builds original procedural vacuum/mouse/pickup geometry, runs optional enemy patrols/pounces, collects items, and resolves animation-impact attacks. It owns no imported animal assets.
+- `rescue-mission.js` builds level two's collidable cage and an independently skinned orange NPC cloned from the existing cat. It owns cloned geometry/materials/skeletons, animates the sliding gate and the cat's escape, and keeps its area/approaches clear during generation. Source GLB/Blender files are unchanged; this runtime coat is an NPC, not a playable coat selector.
 - `game.js` integrates campaign gates, character physics/animations, death/respawn, boss retry/completion, and desktop/touch HUDs. `bossScenario` is an isolated test hook, not evidence of a played campaign.
 
 The editable cat GLB/Blender source is unchanged. Visible equipment is attached to
@@ -23,12 +24,40 @@ Run again starts fresh. Combat death removes the pendant and retains the collar.
 Claimed pickups do not reappear just because a pendant was lost. Ordinary wet-paw
 or rotating-hazard checkpoint bumps are deliberately not combat deaths.
 
-Each room spawns 1/2/3 clockwork mice in optional patrol areas. A mouse warns for
+Rooms one and three spawn one and three optional clockwork mice. Level two has
+exactly three required cage guards. A mouse warns for
 0.9 seconds, lunges toward the previously marked position, then rests. Claws and
 bites must face a nearby target; the third room's mice take two base hits.
 Every defeated mouse drops either a rich fish snack (+10 satiety, +9 chonk,
 +25 snack points, not objective progress) or a
 room-tier pendant. Kills/pickup IDs prevent duplicate rewards on regeneration.
+
+## Orange Cat Rescue
+
+The kitchen's main objective is rescuing a caged orange cat, replacing its four
+required meals. Those four food cans remain optional energy supplies. The other
+rooms retain three and five required suppers, including upstairs objectives.
+
+Each guard needs two distinct successful Claw impacts, with range/facing checks.
+Bites do not count, and pendant damage cannot skip the second swipe. Two marks
+above each guard show remaining swipes. `RunProgress.guardSwipes` and defeated
+IDs retain damage/kills through deaths and regeneration; only a new run resets
+them. Every defeated guard still drops food or a pendant.
+
+All three defeats lift the cage gate. Its collider follows the moving bars,
+then the orange cat walks out using the existing Walk clip and returns to Idle.
+Only that completed release unlocks the pet door and awards 100 XP once. An early
+visit to the exit, eating food or defeating fewer guards cannot clear the room.
+This keeps the basic campaign at 850 XP: eight suppers, one rescue, three room
+clear rewards and the vacuum victory. The NPC has its own skeleton, animation
+mixer, geometry and coat colors; disposal must not affect the playable cat.
+
+`tools/rescue-test.js` tests isolated desktop/touch scenarios. Campaign autoplay
+uses keyboard movement and claws to reach and defeat the guards without
+teleporting or editing their health.
+
+## Recovery
+
 Starvation also drops the pendant and spends a room life, with safe energy
 recovery at the checkpoint. See [condition system](condition-system.md) for the
 separate snack wallet, body puzzles and nine-life room continue.

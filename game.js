@@ -9,11 +9,13 @@ import { footprint, generateCourse } from "./course-generator.js";
 import { MouseLookController } from "./camera-controls.js";
 import { TouchControls } from "./touch-controls.js";
 import { JUMP_PHYSICS, getJumpProfile, speedMultiplier, assessJump } from "./jump-rules.js";
-import { RunProgress } from "./adventure-rules.js";
+import { RunProgress, ORANGE_CAT_RESCUE } from "./adventure-rules.js";
 import { AdventureWorld } from "./adventure-world.js";
 import { CONDITION, NUTRITION, nourish, metabolize, burnJump, bodyRadius, SnackWallet } from "./condition-rules.js";
 import { installChonkMorph } from "./cat-condition-visual.js";
 import { BodyTrials } from "./body-trials.js";
+import { createFoodCan } from "./food-visual.js";
+import { RescueMission } from "./rescue-mission.js";
 
 const CAT_SCALE = 0.84;
 const CAT_BODY_HEIGHT = 0.76;
@@ -185,15 +187,16 @@ const STEP_HEIGHT = 0.18;
 const LEVELS = [
   {
     name: "Living Room Zoomies",
-    description: "Raid the bowls upstairs. Follow the oak stairs, then try the catnip balcony leap.",
+    description: "Find the food cans upstairs. Follow the oak stairs, then try the catnip balcony leap.",
     foods: 3,
     spawn: [0, 0, 15.2],
     goal: [0, -18.4],
     theme: "living",
   },
   {
-    name: "Kitchen Counter Caper",
-    description: "Cross the spills and climb to the pantry loft. Catnip opens a longer shelf jump.",
+    name: "Orange Cat Rescue",
+    description: "Free the orange cat from the kitchen cage. Defeat its 3 mouse guards with 2 claw swipes each, then reach the pet door.",
+    mission: "rescue",
     foods: 4,
     spawn: [0, 0, 15.2],
     goal: [0, -18.4],
@@ -213,6 +216,11 @@ let activeGoal = null;
 let transitionTimer = null;
 let eatingTarget = null;
 const progress = new RunProgress();
+const rescue = new RescueMission({
+  root: levelRoot, progress, collider: addCollider, surface: addSurface, sign: addWorldSign,
+  source: () => ({ model: character.model, idle: character.actions.Idle.getClip(), walk: character.actions.Walk.getClip() }),
+  onRescue: () => { state.xp += ORANGE_CAT_RESCUE.xp; },
+});
 let pointStorage;
 try { pointStorage = localStorage; } catch { /* Session-only fallback. */ }
 const wallet = new SnackWallet(pointStorage);
@@ -584,6 +592,7 @@ function createLevelRandom(levelIndex) {
 }
 
 function clearLevel() {
+  rescue.clear();
   adventure.clear();
   bodyTrials.clear();
   for (const child of [...levelRoot.children]) {
@@ -881,6 +890,7 @@ function createGoal(x, z) {
 }
 
 function buildGeneratedCourse(definition, random, difficulty) {
+  const mealOptions = definition.mission === "rescue" ? { required: false, nutrition: "meal", xp: 0 } : {};
   const jitter = (amount) => (random() - 0.5) * amount;
   const height = 0.58 + difficulty * 0.08;
   const platform = createStaticPlatform(-3.4 + jitter(2.0), 3.2 + jitter(1.5), 2.5, 2.5, height);
@@ -888,18 +898,19 @@ function buildGeneratedCourse(definition, random, difficulty) {
   const floorAnchors = [[-5.0, 11.2], [6.0, 7.4], [-12.0, -2.0]];
   for (let index = 0; index < definition.foods - 2; index += 1) {
     const [x, z] = floorAnchors[index];
-    createFood(x + jitter(2.4), z + jitter(2.0), FOOD_LABELS[(difficulty + index) % FOOD_LABELS.length]);
+    createFood(x + jitter(2.4), z + jitter(2.0), FOOD_LABELS[(difficulty + index) % FOOD_LABELS.length], 0, mealOptions);
   }
-  createFood(platform.position.x, platform.position.z, "FISH", height);
-  createFood(difficulty === 2 ? -2.3 : 6.1, -10.2, "SUPPER", 2.7);
+  createFood(platform.position.x, platform.position.z, "FISH", height, mealOptions);
+  createFood(difficulty === 2 ? -2.3 : 6.1, -10.2, "SUPPER", 2.7, mealOptions);
   createCheckpoint(0, 0.2);
 
   const targets = [
-    ...foods.filter((food) => food.required && food.baseY < 2).map((food) => [food.group.position.x, food.baseY, food.group.position.z]),
+    ...foods.filter((food) => food.nutrition === "meal" && food.baseY < 2).map((food) => [food.group.position.x, food.baseY, food.group.position.z]),
     verticalRoutes[0].stairs.entry,
     activeGoal.position.toArray(),
     [0, 0, 0.2],
     ...adventure.items.map((item) => [item.x, 0, item.z]),
+    ...rescue.targets,
     [-11, 0, 10.5], [11, 0, 10.5], [4.3, 0, 15.7], [-1.5, 0, 15],
   ];
   generatedCourse = generateCourse({
@@ -910,6 +921,7 @@ function buildGeneratedCourse(definition, random, difficulty) {
       footprint(4.5, -4.6, 4.0, 10.0),
       footprint(8.7, 3.8, 4.0, 8.0),
       ...bodyTrials.protectedAreas,
+      ...rescue.protectedAreas,
     ],
   });
   for (const obstacle of generatedCourse.obstacles) {
@@ -954,6 +966,7 @@ function buildLevel(levelIndex, announce = true) {
   bodyTrials.materials = materials;
   bodyTrials.build();
   adventure.buildRoom(levelIndex, colliders);
+  if (definition.mission === "rescue") rescue.build();
   buildGeneratedCourse(definition, random, levelIndex);
 
   const spawn = new THREE.Vector3(...definition.spawn);
@@ -969,19 +982,8 @@ function buildLevel(levelIndex, announce = true) {
 }
 
 function createFood(x, z, label, y = 0, options = {}) {
-  const group = new THREE.Group();
-  group.userData.ownsMaterials = true;
-  const bowlMat = new THREE.MeshStandardMaterial({ color: 0x886247, roughness: 0.55, metalness: 0.08 });
-  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.34, 0.18, 32, 1, true), bowlMat);
-  bowl.castShadow = true;
-  bowl.position.y = 0.1;
-  group.add(bowl);
-  const foodMat = new THREE.MeshStandardMaterial({ color: options.boost ? 0x82b458 : label === "FISH" ? 0x9db6ad : 0xa75e35, roughness: 0.72, emissive: options.boost ? 0x346e24 : 0x27150c, emissiveIntensity: 0.4 });
-  const food = new THREE.Mesh(new THREE.SphereGeometry(0.29, 22, 12), foodMat);
-  food.scale.y = 0.32;
-  food.position.y = 0.2;
-  group.add(food);
-  const halo = new THREE.PointLight(options.boost ? 0xacec83 : 0xe7a25d, 2.2, 2.4, 2);
+  const group = createFoodCan({ label, ...options });
+  const halo = new THREE.PointLight(options.boost ? 0xacec83 : 0xe7a25d, 0.3, 1.5, 2);
   halo.position.y = 0.65;
   group.add(halo);
   group.position.set(x, y, z);
@@ -1430,7 +1432,7 @@ function updateFood(delta, speed) {
     }
   }
 
-  const foodRole = nearest ? nearest.required ? "SUPPER OBJECTIVE" : nearest.boost ? "SPEED BOOST" : nearest.nutrition === "lean" ? "ENERGY / NO FAT" : `OPTIONAL / +${NUTRITION[nearest.nutrition].points} POINTS` : "";
+  const foodRole = nearest ? nearest.required ? "SUPPER OBJECTIVE" : nearest.boost ? "SPEED BOOST" : nearest.nutrition === "lean" ? "ENERGY / NO FAT" : nearest.nutrition === "meal" ? "OPTIONAL / ENERGY" : `OPTIONAL / +${NUTRITION[nearest.nutrition].points} POINTS` : "";
   ui.prompt.textContent = nearest && nearestDistance < 2.1 ? `${nearest.label} / ${foodRole} / MOVE CLOSER` : "";
   const wrongHeight = nearest && Math.abs(nearest.baseY - character.root.position.y) > 0.34;
   const movementRequested = MOVEMENT_KEYS.some((key) => keys.has(key)) || Math.hypot(touchControls?.x ?? 0, touchControls?.z ?? 0) > 0;
@@ -1474,6 +1476,8 @@ function updateFood(delta, speed) {
       showToast(`${nearest.label.toLowerCase()} / +${points} snack points, +${NUTRITION[nearest.nutrition].weight} chonk. Not a supper objective.${refill}`, 3.5);
     } else if (nearest.nutrition === "lean") {
       showToast("Lean supper / energy restored, no extra fat. Refills in 32 seconds.", 3.5);
+    } else if (!nearest.required) {
+      showToast("Meal eaten / energy restored.", 3);
     } else {
       showToast(`${nearest.label.toLowerCase()} secured · +${nearest.xp} XP`, 2.8);
     }
@@ -1604,7 +1608,7 @@ function finishGame() {
   ui.hud.classList.add("is-hidden");
   ui.completion.classList.remove("is-hidden");
   const seconds = Math.max(1, Math.round((performance.now() - state.runStartedAt) / 1000));
-  ui.completionStats.textContent = `${state.xp} XP · ${state.eaten} meals · ${state.jumps} jumps · ${state.bonks} bonks · ${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+  ui.completionStats.textContent = `${state.xp} XP · ${state.eaten} meals · ${progress.orangeCatRescued ? "orange cat rescued · " : ""}${state.jumps} jumps · ${state.bonks} bonks · ${Math.floor(seconds / 60)}m ${seconds % 60}s`;
   document.exitPointerLock?.();
 }
 
@@ -1633,11 +1637,11 @@ function completeLevel() {
 
 function updateGoal(delta, elapsed) {
   if (!activeGoal) return;
-  const allFoodFound = foods.every((food) => !food.required || !food.active);
-  if (allFoodFound && !activeGoal.active) {
+  const missionComplete = LEVELS[state.level].mission === "rescue" ? progress.orangeCatRescued : foods.every((food) => !food.required || !food.active);
+  if (missionComplete && !activeGoal.active) {
     activeGoal.active = true;
     activeGoal.light.intensity = 8;
-    showToast("Room searched. Reach the glowing pet door.", 3.2);
+    showToast(LEVELS[state.level].mission === "rescue" ? "Orange cat rescued / +100 XP! Reach the glowing pet door." : "Room searched. Reach the glowing pet door.", 4);
   }
   const pulse = 1 + Math.sin(elapsed * 2.8) * (activeGoal.active ? 0.055 : 0.015);
   activeGoal.marker.scale.set(pulse, pulse, 1);
@@ -1826,6 +1830,7 @@ function updateAdventure(delta, elapsed) {
     }
   }
   adventure.update(delta, elapsed, player, active);
+  rescue.update(delta, active);
   if (active && adventure.boss) {
     const geometry = adventure.boss.geometry(player);
     ui.prompt.textContent = geometry.distance < 3.1
@@ -1833,7 +1838,7 @@ function updateAdventure(delta, elapsed) {
       : "DODGE THE INTAKE / CLAW THE GREEN REAR";
   } else if (active) {
     const enemy = adventure.enemies.find((enemy) => enemy.active && Math.hypot(enemy.group.position.x - player.x, enemy.group.position.z - player.z) < 2.5);
-    if (enemy) ui.prompt.textContent = enemy.state === "warn" ? "MOUSE WINDING UP / CLAW OR DODGE" : "CLOCKWORK MOUSE / CLAW OR BITE FOR LOOT";
+    if (enemy) ui.prompt.textContent = enemy.guard ? `CAGE GUARD / ${enemy.health} CLAW ${enemy.health === 1 ? "SWIPE" : "SWIPES"} LEFT${enemy.state === "warn" ? " / DODGE THE POUNCE" : ""}` : enemy.state === "warn" ? "MOUSE WINDING UP / CLAW OR DODGE" : "CLOCKWORK MOUSE / CLAW OR BITE FOR LOOT";
     else if (!eatingTarget) ui.prompt.textContent = bodyTrials.prompt(position, state.chonk) || ui.prompt.textContent;
   }
 }
@@ -1973,6 +1978,9 @@ function updateHud(speed) {
   const left = remaining.length;
   const upstairs = remaining.some((food) => food.baseY > 2);
   ui.objective.textContent = left ? `Find supper · ${left} scents${upstairs ? " / check upstairs" : " remain"}` : "Reach the glowing pet door";
+  if (state.stage === "rooms" && LEVELS[state.level].mission === "rescue") {
+    ui.objective.textContent = progress.orangeCatRescued ? "Orange cat rescued / pet door" : progress.guardsRemaining ? `Free orange cat / ${progress.guardsRemaining} guards left` : "Cage open / cat coming out";
+  }
   if (state.stage === "boss") {
     ui.levelName.textContent = "FINAL ENCOUNTER";
     ui.objective.textContent = "Circle behind / claw the green filter";
@@ -2205,6 +2213,7 @@ window.__megaChonk = {
     gameComplete: state.gameComplete,
     stage: state.stage,
     adventure: adventure.snapshot(),
+    rescue: rescue.snapshot(),
     bodyTrials: bodyTrials.snapshot(),
     grounded: state.grounded,
     bonks: state.bonks,
@@ -2268,6 +2277,7 @@ window.__megaChonk = {
     coat: state.coat,
     stage: state.stage,
     adventure: adventure.snapshot(),
+    rescue: rescue.snapshot(),
     triangles: character.triangleCount,
     visualMode: character.visualMode,
     modelName: character.model?.name ?? null,

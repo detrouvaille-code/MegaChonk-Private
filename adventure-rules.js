@@ -1,6 +1,17 @@
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 const angleDelta = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
+export const ORANGE_CAT_RESCUE = Object.freeze({
+  cage: Object.freeze([0, -16.1]),
+  swipes: 2,
+  xp: 100,
+  guards: Object.freeze([
+    Object.freeze({ id: "rescue-guard-left", x: -4.5, z: -14 }),
+    Object.freeze({ id: "rescue-guard-center", x: 0, z: -13.6 }),
+    Object.freeze({ id: "rescue-guard-right", x: 4.5, z: -14 }),
+  ]),
+});
+
 export class RunProgress {
   constructor() { this.reset(); }
   reset() {
@@ -10,6 +21,21 @@ export class RunProgress {
     this.defeatedEnemies = new Set();
     this.deaths = 0;
     this.bossDefeated = false;
+    this.guardSwipes = new Map();
+    this.orangeCatRescued = false;
+  }
+  guardHealth(id) { return ORANGE_CAT_RESCUE.swipes - (this.guardSwipes.get(id) ?? 0); }
+  swipeGuard(id, kind) {
+    if (kind !== "Claw" || !ORANGE_CAT_RESCUE.guards.some((guard) => guard.id === id) || this.guardHealth(id) <= 0) return false;
+    this.guardSwipes.set(id, (this.guardSwipes.get(id) ?? 0) + 1);
+    if (this.guardHealth(id) === 0) this.defeatedEnemies.add(id);
+    return true;
+  }
+  get guardsRemaining() { return ORANGE_CAT_RESCUE.guards.filter((guard) => !this.defeatedEnemies.has(guard.id)).length; }
+  rescueCat() {
+    if (this.orangeCatRescued || this.guardsRemaining > 0) return false;
+    this.orangeCatRescued = true;
+    return true;
   }
   equip(item) {
     if (!["collar", "charm"].includes(item.kind) || this.claimed.has(item.id)) return false;
@@ -28,7 +54,7 @@ export class RunProgress {
     return { speed: 1 + (this.collar?.tier ?? 0) * 0.03, clawDamage: this.charm ? 2 : 1, hungerDrain: 1 - (this.charm?.tier ?? 0) * 0.1 };
   }
   snapshot() {
-    return { collar: this.collar, charm: this.charm, stats: this.stats, kills: this.defeatedEnemies.size, deaths: this.deaths, bossDefeated: this.bossDefeated };
+    return { collar: this.collar, charm: this.charm, stats: this.stats, kills: this.defeatedEnemies.size, deaths: this.deaths, bossDefeated: this.bossDefeated, orangeCatRescued: this.orangeCatRescued };
   }
 }
 

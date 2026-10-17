@@ -63,7 +63,8 @@ const hash = (data) => createHash("sha256").update(data).digest("hex");
     const levels = [];
     for (const level of [0, 1, 2]) {
       const result = await page.evaluate((index) => { window.__megaChonk.loadLevel(index); return window.__megaChonk.snapshot(); }, level);
-      if (result.foodsRemaining !== [3, 4, 5][level] || result.upstairsHeight !== 2.7) throw new Error(`Broken hosted level ${level + 1}`);
+      if (result.foodsRemaining !== [3, 0, 5][level] || result.upstairsHeight !== 2.7) throw new Error(`Broken hosted level ${level + 1}`);
+      if (level === 1 && (!result.rescue || result.adventure.enemies.filter((enemy) => enemy.guard).length !== 3)) throw new Error("Missing hosted orange-cat rescue");
       if (result.catScale !== 0.84 || result.house.width !== 46 || result.house.depth !== 42 || result.generatedObstacles < 25) throw new Error(`Stale house generation on hosted level ${level + 1}`);
       levels.push({ level: level + 1, meals: result.foodsRemaining, upstairs: result.upstairsHeight });
     }

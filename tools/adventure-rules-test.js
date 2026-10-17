@@ -4,12 +4,31 @@ const path = require("path");
 const load = (file) => import(`data:text/javascript;base64,${fs.readFileSync(path.join(__dirname, "..", file)).toString("base64")}`);
 
 (async () => {
-  const { RunProgress, BossEncounter, BOSS_DEFINITIONS } = await load("adventure-rules.js");
+  const { RunProgress, BossEncounter, BOSS_DEFINITIONS, ORANGE_CAT_RESCUE } = await load("adventure-rules.js");
   const { assessJump, getJumpProfile } = await load("jump-rules.js");
   const progress = new RunProgress();
   assert.equal(progress.equip({ id: "c1", kind: "collar", tier: 2 }), true);
   progress.equip({ id: "p1", kind: "charm", tier: 2 });
   assert.equal(progress.stats.clawDamage, 2);
+  assert.equal(progress.rescueCat(), false);
+  for (const guard of ORANGE_CAT_RESCUE.guards) {
+    assert.equal(progress.swipeGuard(guard.id, "Bite"), false);
+    assert.equal(progress.guardHealth(guard.id), 2);
+    assert.equal(progress.swipeGuard(guard.id, "Claw"), true);
+    assert.equal(progress.guardHealth(guard.id), 1, "Pendant damage cannot skip the second swipe");
+    progress.die();
+    assert.equal(progress.guardHealth(guard.id), 1, "A death must preserve rescue progress");
+    assert.equal(progress.swipeGuard(guard.id, "Claw"), true);
+    assert.equal(progress.swipeGuard(guard.id, "Claw"), false, "Defeated guards cannot be hit again");
+  }
+  assert.equal(progress.guardsRemaining, 0);
+  assert.equal(progress.rescueCat(), true);
+  assert.equal(progress.rescueCat(), false, "Rescue rewards are awarded only once");
+  progress.reset();
+  assert.equal(progress.orangeCatRescued, false);
+  assert.equal(progress.guardsRemaining, 3);
+  progress.equip({ id: "c1", kind: "collar", tier: 2 });
+  progress.equip({ id: "p1", kind: "charm", tier: 2 });
   assert.equal(progress.stats.speed, 1.06);
   assert.equal(progress.stats.hungerDrain, 0.8);
   assert.equal(progress.equip({ id: "p1", kind: "charm", tier: 2 }), false);
@@ -64,5 +83,5 @@ const load = (file) => import(`data:text/javascript;base64,${fs.readFileSync(pat
   progress.reset();
   assert.equal(progress.collar, null);
   assert.equal(progress.deaths, 0);
-  console.log("Adventure rules passed: equipment/death, rear-only claws, suction, nine lives/retry, bare-paw victory, custom attacks, safe jump envelope");
+  console.log("Adventure rules passed: two-swipe cage guards/rescue/reset, equipment/death, rear-only claws, suction, nine lives/retry, bare-paw victory, custom attacks, safe jump envelope");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

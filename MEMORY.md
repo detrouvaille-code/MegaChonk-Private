@@ -1,12 +1,16 @@
 # Mega Chonk Project Memory
 
-Last updated: 2026-10-17 (Asia/Singapore).
-Latest gameplay baseline: `3a3e447` on `main`.
+Last updated: 2026-10-18 (Asia/Shanghai).
+Latest released gameplay baseline: `3a3e447` on `main`.
 Read current Git history before relying on that baseline; this file is not a live
 deployment status feed.
 
 ## Resume Here
 
+- Latest completed gameplay request: level two is **Orange Cat Rescue** in the kitchen. A real skinned orange NPC waits in a cage guarded by exactly three mice. Each guard requires two Claw impacts regardless of pendant damage; bites do not count. All three defeats open the cage, the orange cat walks onto the floor, 100 XP is awarded once, and the pet door unlocks. Partial hits/kills survive deaths and regeneration; a new run resets them. The four kitchen meals are now optional energy food, leaving eight required suppers in levels one/three. The base campaign still earns 850 XP before checkpoint bonuses. Implementation and limits: [rescue verification](docs/rescue-verification.md).
+- Current verification: syntax for 12 runtime modules and seven changed browser tools, adventure rules, rescue desktop/emulated-touch scenarios, smoke, vertical, adventure integration, mobile controls, 90 seeded layouts, and local Pages passed. Both full keyboard campaigns completed eight meals + rescue + vacuum with 865 XP: seed 424242 used 12 jumps/3 combat deaths; seed 765432 used 7 jumps/4 combat deaths. Final cage-threshold/foot-grounding polish was checked by focused rescue scenarios and Pages afterward. The package has 35 runtime files (12.63 MB) and the unchanged cat GLB hash. Physical phones/Safari, condition integration and live hosting were not checked in this contribution.
+- The prior cat-food-can change is included: `food-visual.js` supplies repeated cat-face labels, stamped lids and pull tabs for every food role and enemy food drop, with a softer halo. Green marks catnip and blue marks lean food. The playable Turkish Van and canonical `.blend`/`.glb` are unchanged; the orange NPC has independent runtime geometry/materials/skeleton. Inspected baseline is `main` at `f02c205942d048d7b8ca7c1f892e4cab15deee9e`, origin `https://github.com/desmondttm123/MegaChonk`.
+- On 2026-10-18 the user requested saving both changes in a local Git checkpoint, titled `Add cat-food cans and orange-cat rescue mission`. No push or deployment was requested; consult Git history for the checkpoint hash.
 - Latest released request: make a regenerating food supply available in every level and make running/jumping slim the cat. Each room now has two clearly signed +9-chonk rich bowls that return after 20 seconds without counting as supper progress. Walking still trims gradually, trotting/running burns over 2.5x as much weight at base pace, and each successful jump burns 0.45 chonk down to the existing 26 floor.
 - Published gameplay as `3a3e447` through successful Pages workflow `39007873141`. The public manifest matched `3a3e447bc086ba53968bfd82a95394665a17c732` with 33 runtime files and the unchanged canonical model hash; hosted Pages verified all three levels, movement, jumping and no browser errors. Pure condition rules, condition integration (all-room supply plus an actual rich-bowl refill), smoke, 90 layouts, adventure, mobile, vertical, visual-cat, local Pages, and full campaign seeds 424242/765432 passed. The campaigns completed 12 suppers + boss with 850 XP, no deaths/bonks, 4/5 jumps, and finished near 38.92/38.62 chonk without optional food. One vertical test launched during parallel browser load timed out at startup; its isolated rerun passed. Physical phones/Safari were not tested.
 - Previous released request: longer average leaps, continuous interruptible eating, meaningful energy/weight, optional point-bearing fattening snacks, starvation life loss, narrow passages, heavy pressure plates and a safe trim/refeed loop. User explicitly requested auto-push. Balance and test boundaries: [condition system](docs/condition-system.md).
@@ -28,9 +32,9 @@ deployment status feed.
 - Name: **Mega Chonk**. Single-player browser game with desktop keyboard/mouse and optional phone virtual controls.
 - Visual direction: a believable Turkish Van, mostly white with chestnut ears/tail/patches, smooth animated limbs, subtle idle life, and large dark night-adapted pupils. Stray is a quality/control reference, not an asset source.
 - The user rejected boxy cats and rigid frame-by-frame sprites. The active character is a real skinned GLB rendered in Three.js. More polygons alone are not the solution to anatomy, clipping, or animation problems.
-- The setting is a house with furniture and vertical exploration, not a dungeon. There are three rooms: Living Room Zoomies, Kitchen Counter Caper, and Attic Midnight Run.
-- Eat every required bowl, then reach the pet door. Room meal counts are 3/4/5: 12 total, with one upstairs in each room. The third door leads to the vacuum boss. Base completion earns 850 XP including the boss's 250 XP, before optional bonuses.
-- Required food restores energy with little weight; optional snacks add significant chonk and saved points, not objective progress. Two rich bowls per room regenerate for repeatable weight gain. Walking drains weight gradually, running does so much faster, and successful jumps have a small fixed weight burn; balanced condition is fastest. Satiety at or below 8 or chonk at or above 90 blocks jumping. Six seconds at zero loses a life with safe checkpoint energy recovery. See condition-system for tuning.
+- The setting is a house with furniture and vertical exploration, not a dungeon. The three missions are Living Room Zoomies, Orange Cat Rescue in the kitchen, and Attic Midnight Run.
+- Levels one/three require 3/5 food cans, including one upstairs each. Level two requires rescuing the orange cat by clawing each of three cage guards twice; food there is optional. Reach each pet door after its mission. The third door leads to the vacuum boss. Base completion earns 850 XP including 100 rescue XP and the boss's 250 XP, before optional checkpoint/bonus rewards.
+- Required food restores energy with little weight; optional snacks add significant chonk and saved points, not objective progress. Two rich cans per room regenerate for repeatable weight gain. Walking drains weight gradually, running does so much faster, and successful jumps have a small fixed weight burn; balanced condition is fastest. Satiety at or below 8 or chonk at or above 90 blocks jumping. Six seconds at zero loses a life with safe checkpoint energy recovery. See condition-system for tuning.
 - WASD/arrows move relative to the camera; W moves away from it, showing the cat's back. Shift trots, Space jumps, Q sits, F/LMB claws, E/RMB bites. Five idle seconds trigger grooming; movement interrupts it and automatic eating immediately.
 - Touch uses a left analog joystick, right-side swipe to look, action buttons, and a latched Trot toggle. Use Trot + Jump for longer jumps. Do not require pointer lock or synthesize sticky WASD keys for touch input.
 - Claw and bite damage clockwork mice at animation impact time. Only rear-facing claws damage the vacuum. This is a basic combat/equipment foundation, not a finished RPG, networking, or inventory-menu system.
@@ -45,13 +49,15 @@ deployment status feed.
 | Camera | `camera-controls.js`: filtered input consumed per frame; `game.js`: follow camera and collision recovery |
 | Touch | `touch-controls.js`: pointer capture, analog movement, look smoothing, buttons, mode/lifecycle state; `window.__megaChonk.touchSnapshot()` is a test/debug hook |
 | Adventure rules | `adventure-rules.js`: run equipment/ownership, boss phase/attack/weak-point registries, health/lives/retry |
-| Adventure visuals/AI | `adventure-world.js`: original procedural vacuum, optional clockwork mice, pickups, loot and animation-impact interactions |
+| Adventure visuals/AI | `adventure-world.js`: original procedural vacuum, optional mice and three required cage guards, pickups, loot and animation-impact interactions |
+| Food visuals | `food-visual.js`: shared procedural cat-food tin, CanvasTexture cat-face labels and lid artwork; all food roles and loot |
+| Rescue mission | `rescue-mission.js`: collidable kitchen cage, independent orange skinned NPC, gate/escape animation and protected approaches; guard rules/progress in `adventure-rules.js` |
 | Jump planning | `jump-rules.js`: runtime pace/impulse and conservative generation envelope (38 satiety, 75 chonk, no equipment/catnip) |
 | Condition | `condition-rules.js`: recipes, metabolism, workouts, body thresholds and browser-local snack points; `body-trials.js`: optional slim/weight puzzles; `cat-condition-visual.js`: torso-only morph |
 | Generation | `course-generator.js`: seeded layouts, grid routes, reserved corridors and swept obstacle envelopes |
 | Character | `turkish-van-game-cat.glb`: 193,136 triangles, 24 skinned meshes, one armature |
 | Animation clips | Idle, Walk, Groom, Sit, Jump, Claw, Bite |
-| House scale | Floor 46 x 42, ceiling 7.2; cat scale 0.84, mass-dependent capsule radius 0.22-0.35, height 0.76; bowls scale 0.70 |
+| House scale | Floor 46 x 42, ceiling 7.2; cat scale 0.84, mass-dependent capsule radius 0.22-0.35, height 0.76; food cans scale 0.70 |
 | Vertical route | Gallery height 2.7; 18 stairs with 0.15 rise; protected launch/return shelves |
 | Catnip | Optional; 18 seconds of 1.32x speed and 1.18x jump impulse; regrows after 22 seconds; cannot bypass condition limits |
 | Course counts | 25/30/37 generated obstacles across the three rooms in verified layouts |

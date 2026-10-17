@@ -28,7 +28,7 @@ const captureScreenshot = require("./capture-screenshot");
           const { obstacles, routes, corridorWidth } = nav.generation;
           const fail = (message) => { throw new Error(`Seed ${seed}, room ${level + 1}: ${message}`); };
           if (nav.house.width < 45 || nav.house.depth < 40 || nav.catScale > 0.90) fail("House/cat scale regression");
-          if (nav.foods.length !== level + 3 || !nav.foods.some((food) => food.position[1] === 2.7)) fail("Missing objectives");
+          if (level === 1 ? nav.foods.length !== 0 || !nav.rescue || nav.adventure.enemies.filter((enemy) => enemy.guard).length !== 3 : nav.foods.length !== level + 3 || !nav.foods.some((food) => food.position[1] === 2.7)) fail("Missing objectives");
           const counts = Object.fromEntries(["bridge", "vacuum", "hurdle", "clutter"].map((type) => [type, obstacles.filter((item) => item.type === type).length]));
           if (counts.bridge < 1 || counts.vacuum < 1 || counts.hurdle < 3 || counts.clutter < 18) fail(`Underfilled course ${JSON.stringify(counts)}`);
           const corridor = routes.flat().map(([x, , z]) => footprint(x, z, corridorWidth));
@@ -42,7 +42,7 @@ const captureScreenshot = require("./capture-screenshot");
           const boxes = [...nav.colliders, ...nav.adventure.enemies.filter((enemy) => enemy.active).map((enemy) => ({ ...footprint(enemy.x, enemy.z, 5), minY: 0, maxY: 2 })), ...nav.hazards.map((hazard) => hazard.type === "spill"
             ? { ...hazard, minY: 0, maxY: 2 }
             : { ...footprint(hazard.x, hazard.z, (hazard.length + 0.65) * 2), minY: 0, maxY: 2 })];
-          const targets = [...nav.foods.filter((food) => food.position[1] < 2).map((food) => food.position), ...nav.adventure.items.filter((item) => item.active).map((item) => [item.x, 0, item.z]), nav.verticalRoutes[0].stairs.entry, nav.goal.position];
+          const targets = [...nav.foods.filter((food) => food.position[1] < 2).map((food) => food.position), ...nav.snacks.filter((food) => food.nutrition === "meal" && food.position[1] < 2).map((food) => food.position), ...nav.adventure.items.filter((item) => item.active).map((item) => [item.x, 0, item.z]), ...(nav.rescue?.targets ?? []), nav.verticalRoutes[0].stairs.entry, nav.goal.position];
           for (const target of targets) if (!findFloorRoute(nav.position, target, nav.bounds, boxes, nav.bodyHeight)) fail(`No safe route to ${target}`);
           const signature = JSON.stringify(obstacles);
           game.regenerate(seed);

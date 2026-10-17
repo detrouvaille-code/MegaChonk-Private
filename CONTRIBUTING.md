@@ -32,7 +32,7 @@ or `node_modules/` to make testing work.
 PowerShell syntax checks and deployment build:
 
 ```powershell
-foreach ($file in 'game.js', 'course-generator.js', 'camera-controls.js', 'touch-controls.js', 'jump-rules.js', 'adventure-rules.js', 'adventure-world.js', 'condition-rules.js', 'body-trials.js', 'cat-condition-visual.js') {
+foreach ($file in 'game.js', 'course-generator.js', 'camera-controls.js', 'touch-controls.js', 'jump-rules.js', 'adventure-rules.js', 'adventure-world.js', 'condition-rules.js', 'body-trials.js', 'cat-condition-visual.js', 'food-visual.js', 'rescue-mission.js') {
   Get-Content -Raw $file | node --input-type=module --check
   if ($LASTEXITCODE -ne 0) { throw "Syntax check failed: $file" }
 }
@@ -47,6 +47,7 @@ node tools/adventure-rules-test.js
 node tools/condition-rules-test.js
 node tools/condition-test.js
 node tools/adventure-test.js
+node tools/rescue-test.js
 node tools/camera-controls-test.js
 node tools/mobile-controls-test.js
 node tools/generation-test.js
@@ -62,6 +63,7 @@ node tools/pages-test.js
 | Gameplay, physics, progression, eating | Smoke, vertical challenges, full autoplay |
 | Appetite, weight, body trials, points | Condition rules/integration, adventure, generation, mobile, visual, both full autoplay seeds |
 | Bosses, enemies, equipment, rewards | Adventure rules, adventure integration, mobile controls, both full autoplay seeds |
+| Level-two rescue | Rescue desktop/touch scenarios, adventure rules/integration, generation, smoke, vertical, mobile and both full autoplay seeds |
 | Mouse/input/follow camera | Camera controls, smoke, Pages |
 | Touch controls or mobile layout | Mobile controls, camera controls, smoke, Pages; autoplay if shared movement changes |
 | Random layouts or house/cat scale | Generation, smoke, vertical challenges, both autoplay seeds, visual review |
@@ -126,3 +128,6 @@ against the intended checkout. Report tests skipped or unavailable, not just
 successful checks. Never commit `dist/`, logs, Blender backups, dependencies,
 tokens, or credentials. Do not change repository/Pages settings merely to finish
 an unrelated task.
+
+Current local rescue behavior, verification and campaign results are recorded in
+[rescue verification](docs/rescue-verification.md).

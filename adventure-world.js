@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { BossEncounter } from "./adventure-rules.js";
+import { BossEncounter, ORANGE_CAT_RESCUE } from "./adventure-rules.js";
+import { createFoodCan } from "./food-visual.js";
 
 const gold = 0xe7b961;
 const mint = 0x99e0b0;
@@ -34,9 +35,10 @@ function collectible(parent, kind, x, z) {
     mesh(group, new THREE.OctahedronGeometry(0.22, 1), gold, [0, 0, 0], { emissive: 0x624115, emissiveIntensity: 0.4 });
     mesh(group, new THREE.TorusGeometry(0.06, 0.016, 8, 20), gold, [0, 0.26, 0]);
   } else {
-    const fish = mesh(group, new THREE.SphereGeometry(0.23, 24, 14), color, [0, 0, 0]);
-    fish.scale.set(1.5, 0.65, 0.7);
-    mesh(group, new THREE.ConeGeometry(0.17, 0.23, 3), color, [-0.36, 0, 0]).rotation.z = -Math.PI / 2;
+    const can = createFoodCan({ label: "FISH", nutrition: "snack", required: false });
+    can.scale.setScalar(0.7);
+    can.position.y = -0.2;
+    group.add(can);
   }
   parent.add(group);
   return group;
@@ -63,6 +65,14 @@ function clockworkMouse(parent, x, z, tier) {
   warning.visible = false;
   parent.add(group);
   return { group, key, warning, body };
+}
+
+function groupGuardMarks(group, health) {
+  for (let index = 0; index < 2; index++) {
+    const mark = mesh(group, new THREE.SphereGeometry(0.065, 12, 8), mint, [(index - 0.5) * 0.2, 0.92, 0], { emissive: 0x426e4d, emissiveIntensity: 0.5 });
+    mark.name = `SwipeMark${index}`;
+    mark.visible = index < health;
+  }
 }
 
 function sector(radius, inner, center, half) {
@@ -136,15 +146,21 @@ export class AdventureWorld {
       if (!position) throw new Error(`No reachable ${kind} placement`);
       this.addItem(`room-${level}-${kind}`, kind, level + 1, ...position);
     }
-    const anchors = [[-16, 11], [16, -5], [-16, -13]];
-    for (let index = 0; index <= level; index++) {
-      const id = `room-${level}-mouse-${index}`;
+    const guards = level === 1;
+    const anchors = guards ? ORANGE_CAT_RESCUE.guards.map(({ x, z }) => [x, z]) : [[-16, 11], [16, -5], [-16, -13]].slice(0, level + 1);
+    for (let index = 0; index < anchors.length; index++) {
+      const id = guards ? ORANGE_CAT_RESCUE.guards[index].id : `room-${level}-mouse-${index}`;
       if (this.progress.defeatedEnemies.has(id)) continue;
-      const position = find(...anchors[index], 2.3);
+      const position = guards ? anchors[index] : find(...anchors[index], 2.3);
       if (!position) continue;
       const [x, z] = position;
       const view = clockworkMouse(this.root, x, z, level + 1);
-      this.enemies.push({ id, ...view, x, z, health: level === 2 ? 2 : 1, state: "patrol", time: 0, tier: level + 1, loot: (level + index) % 2 ? "charm" : "food", active: true, hitTime: 0 });
+      const health = guards ? this.progress.guardHealth(id) : level === 2 ? 2 : 1;
+      if (guards) {
+        groupGuardMarks(view.group, health);
+        view.group.name = "RescueGuardMouse";
+      }
+      this.enemies.push({ id, ...view, x, z, guard: guards, health, state: "patrol", time: 0, tier: level + 1, loot: (level + index) % 2 ? "charm" : "food", active: true, hitTime: 0 });
       this.reservations.push({ minX: x - 2.5, maxX: x + 2.5, minZ: z - 2.5, maxZ: z + 2.5, minY: 0, maxY: 2 });
     }
   }
@@ -168,14 +184,23 @@ export class AdventureWorld {
     if (!target) return false;
     const dx = target.group.position.x - player.x, dz = target.group.position.z - player.z;
     if ((dx * Math.sin(player.heading) + dz * Math.cos(player.heading)) / Math.max(0.001, Math.hypot(dx, dz)) < 0.1) return false;
-    target.health -= kind === "Claw" ? this.progress.stats.clawDamage : 1;
+    if (target.guard) {
+      if (target.hitTime > 0) return false;
+      if (!this.progress.swipeGuard(target.id, kind)) {
+        this.onToast("Guard mice need two claw swipes each. Use Claw to free the orange cat.", 2.5);
+        return false;
+      }
+      target.health = this.progress.guardHealth(target.id);
+      target.group.getObjectByName(`SwipeMark${target.health}`).visible = false;
+      if (target.health > 0) this.onToast("Guard hit / one more claw swipe!", 1.8);
+    } else target.health -= kind === "Claw" ? this.progress.stats.clawDamage : 1;
     target.hitTime = 0.3;
     if (target.health <= 0) {
       target.active = false;
       target.group.visible = false;
       this.progress.defeatedEnemies.add(target.id);
       this.addItem(`${target.id}-loot`, target.loot, target.tier, target.group.position.x, target.group.position.z);
-      this.onToast(`Clockwork mouse defeated. ${target.loot === "food" ? "Fish snack" : "Pendant"} dropped!`, 2.5);
+      this.onToast(target.guard ? `Guard defeated / ${this.progress.guardsRemaining} of 3 guards remain.` : `Clockwork mouse defeated. ${target.loot === "food" ? "Fish snack" : "Pendant"} dropped!`, 2.5);
     }
     return true;
   }
@@ -251,6 +276,6 @@ export class AdventureWorld {
     }
   }
   snapshot() {
-    return { ...this.progress.snapshot(), boss: this.boss?.snapshot() ?? null, items: this.items.map(({ id, kind, tier, x, z, active }) => ({ id, kind, tier, x, z, active })), enemies: this.enemies.map((enemy) => ({ id: enemy.id, x: enemy.group.position.x, z: enemy.group.position.z, health: enemy.health, active: enemy.active, state: enemy.state, loot: enemy.loot })) };
+    return { ...this.progress.snapshot(), boss: this.boss?.snapshot() ?? null, items: this.items.map(({ id, kind, tier, x, z, active }) => ({ id, kind, tier, x, z, active })), enemies: this.enemies.map((enemy) => ({ id: enemy.id, x: enemy.group.position.x, z: enemy.group.position.z, home: [enemy.x, 0, enemy.z], guard: enemy.guard, health: enemy.health, active: enemy.active, state: enemy.state, loot: enemy.loot })) };
   }
 }

@@ -34,6 +34,8 @@ agents and human contributors, not a running service or autonomous background jo
 | Runtime torso-only weight blend shape | `cat-condition-visual.js` |
 | Persistent run equipment, reusable boss phases and attack rules | `adventure-rules.js` |
 | Enemy/pickup/boss visuals and world interaction | `adventure-world.js` |
+| Shared cat-food can geometry and label artwork | `food-visual.js` |
+| Level-two cage, orange NPC and release animation | `rescue-mission.js` |
 | Seeded obstacle placement and protected routes | `course-generator.js` |
 | Page shell and styling | `index.html`, `styles.css` |
 | Active cat asset pipeline | `tools/generate_stray_style_cat.py` |
@@ -57,6 +59,7 @@ agents and human contributors, not a running service or autonomous background jo
 - Keep render geometry, collision, support surfaces, and moving-platform ownership aligned. Preserve capsule depenetration and gallery underside collision fixes.
 - Keep generated obstacles outside protected routes and full moving-hazard envelopes. Do not make optional snacks a requirement for opening a pet door.
 - Preserve the round-three boss gate, rear-only claw vulnerability, telegraphed suction, nine-life retry, one hit per attack, guaranteed enemy drops, and run-scoped equipment ownership. Combat death removes the pendant only; ordinary environmental bumps are not combat deaths. Bosses must be winnable without accessories.
+- Level two is the orange-cat rescue: exactly three guard mice, exactly two claw swipes each regardless of equipment, no bite substitution, and a physically locked cage until all guards are defeated. Food there is optional. Preserve partial guard progress through deaths, release/exit gating, one-time rescue XP and run reset. The orange NPC is a separate runtime clone of the rig; never recolor or dispose the playable cat's resources.
 - Never publish credentials or store tokens in handoff notes. Git pushes and deployment/settings changes require the user's authorization; these files do not grant it.
 
 ## Verify Before Handoff

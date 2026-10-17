@@ -37,6 +37,8 @@ jobs:
           node --input-type=module --check < condition-rules.js
           node --input-type=module --check < cat-condition-visual.js
           node --input-type=module --check < body-trials.js
+          node --input-type=module --check < food-visual.js
+          node --input-type=module --check < rescue-mission.js
       - name: Check adventure rules
         run: node tools/adventure-rules-test.js
       - name: Check condition balance

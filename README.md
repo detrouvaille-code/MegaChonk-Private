@@ -56,35 +56,38 @@ Mouse look uses filtered relative input, frame-independent smoothing, and bounde
 - Swipe an unobstructed area on the right side to orbit the camera. Movement, looking, and action buttons support simultaneous touches.
 - Tap **Jump**, **Sit**, **Claw**, or **Bite** for the corresponding action.
 - Tap **Trot** to toggle faster movement; combine it with **Jump** for distance. Catnip still boosts speed/leap, and hunger/weight restrictions still apply.
-- Release the joystick beside a bowl to eat automatically. Moving interrupts eating and grooming.
+- Release the joystick beside a food can to eat automatically. Moving interrupts eating and grooming.
 - Use **Touch: on/off** to show or hide the virtual controls, including on a touch-enabled laptop or desktop.
 
 Portrait and landscape layouts are supported, with safe-area spacing for phone edges. Landscape gives a wider view. Interrupted touches, screen resizing, app switching, and level transitions clear held input. Touch/coarse-pointer rendering caps pixel ratio at 1.25 to reduce GPU load without replacing the detailed cat mesh. Automated checks emulate phones in Chromium; physical Android/iOS device performance and Safari behavior still need hands-on verification.
 
 ## Core Loop
 
-Find every **supper objective** in a room, then reach the glowing pet door. Optional treats, lean supper, and catnip do not count toward that objective. Clear Living Room Zoomies, Kitchen Counter Caper, and Attic Midnight Run, then defeat the giant vacuum to finish a run.
+Find every **supper objective** in Living Room Zoomies and Attic Midnight Run. Level two, **Orange Cat Rescue**, sends you to a kitchen cage guarded by three mice. Defeat each guard with exactly **two claw swipes** to open the cage and let the orange cat walk free. Bites do not count, and a pendant cannot reduce the number of swipes. Reach the glowing pet door after each mission, then defeat the giant vacuum to finish the run.
+
+There are eight required meals across levels one and three, plus one rescue. The kitchen's food is optional energy and bonus food. Rescuing the cat grants 100 XP, keeping a basic campaign's total at 850 XP. Guard damage and defeated guards persist through deaths; restarting the run resets the rescue.
 
 - Movement accelerates and decelerates instead of starting or stopping instantly.
 - The cat smoothly turns toward camera-relative movement.
 - Required meals restore 8 satiety (up to 80) with just 0.8 chonk. Optional rich snacks restore 10 satiety, add 9 chonk, and bank 25 snack points. Bonus stashes grant 60 points and 3 chonk. Points are separate from XP and saved in this browser for a future shop; there is no shop yet.
-- Stop beside a bowl to eat automatically. Moving away interrupts eating immediately.
+- Food appears as metal cans with a cat-face label and pull-tab lid, including supper objectives, optional snacks and enemy food drops. Green cans mark catnip; blue cans contain lean supper.
+- Stop beside a food can to eat automatically. Moving away interrupts eating immediately.
 - The cat is fastest near balanced satiety and slows when hungry, overfull, or heavy.
 - Satiety at or below 8 blocks leaping; chonk at or above 90 blocks it too. Healthy jumps travel farther than before, and progressive weight reduces both pace and distance. The torso visibly fills out as chonk rises, without enlarging the head or paws.
 - Energy drains gradually: roughly 27 satiety per minute of continuous trotting, far slower than eating. Warnings appear at 20 and 8. Six active seconds at zero costs a life and the pendant, then restores energy at the checkpoint. Rooms have nine lives and a checkpoint continue; the boss has its own nine-life fight.
 - Every room has an optional **slim stash** (60 chonk or less) and **heavy stash** (hold the plate at 64 chonk or more). Weight gates latch open, and slim filters always let occupants out. These puzzles never block required meals or the pet door.
 - Claw the marked scratch post near the entrance to lose 4 chonk at a cost of 1.5 energy. The nearby lean supper gives 14 energy and no fat, refilling after 32 seconds.
-- Each room has two rich-food bowls beside the weight plate. They add 9 chonk and refill every 20 seconds, so the cat can keep eating to reach its fattest form without advancing supper progress.
+- Each room has two rich-food cans beside the weight plate. They add 9 chonk and refill every 20 seconds, so the cat can keep eating to reach its fattest form without advancing supper progress.
 - Walking gradually trims weight; trotting/running trims it much faster, and every successful jump burns another 0.45 chonk.
 - Extra weight progressively shortens jumps without making a normal run unwinnable.
-- Every room has an oak staircase and an upstairs gallery at 2.7 game units, with one required meal upstairs. Walk onto the stairs; repeated jumping is not needed.
-- The green catnip bowl upstairs grants 18 seconds of +32% speed and +18% jump impulse. Use `Shift` + `Space` (or **Trot** + **Jump** on touch) from the marked balcony opening to reach the bonus perch, then descend the shelves.
+- Every room has an oak staircase and an upstairs gallery at 2.7 game units, with one required meal upstairs in levels one and three and optional food upstairs in level two. Walk onto the stairs; repeated jumping is not needed.
+- The green catnip can upstairs grants 18 seconds of +32% speed and +18% jump impulse. Use `Shift` + `Space` (or **Trot** + **Jump** on touch) from the marked balcony opening to reach the bonus perch, then descend the shelves.
 - Catnip returns after 22 seconds. It has no chonk cost and does not bypass starving/heavy jump restrictions. Catnip and the bonus treat are optional, not requirements for opening the pet door.
 - After five seconds without input, the cat transitions into its grooming animation.
 - Sofas, counters, storage boxes, cushions, spills, robot vacuums, raised ottomans, moving footstools, and cat-bed checkpoints form the obstacle courses.
-- The house has a 46 x 42-unit footprint, nearly twice the previous floor area, and the cat is 37% smaller. The camera, collision capsule, bowls, and shadow match the corrected proportions.
+- The house has a 46 x 42-unit footprint, nearly twice the previous floor area, and the cat is 37% smaller. The camera, collision capsule, food cans, and shadow match the corrected proportions.
 - Each run seed generates hurdle dimensions, spill/bridge locations, vacuum positions and phases, and mixed household clutter: 25, 30, and 37 generated obstacles across the three rooms. Food locations also vary within safe zones.
-- A grid route planner reserves clear corridors to bowls, stairs, checkpoints, and pet doors before placing obstacles. Moving-platform travel and rotating-vacuum reach are included in placement clearance. The structural upstairs route stays fixed so its catnip jump remains reliable.
+- A grid route planner reserves clear corridors to food, stairs, checkpoints, and pet doors before placing obstacles. Moving-platform travel and rotating-vacuum reach are included in placement clearance. The structural upstairs route stays fixed so its catnip jump remains reliable.
 - The cat is visible from any angle with interpolated bone animation and smooth transitions between actions.
 - Foot targets guide the walk cycle and seated poses; the idle clip includes breathing, blinking, head turns, ear movement, and tail sway. Forelegs have higher anatomical elbows, articulated scapulae, and smoothed joint weights.
 - Fur uses white/chestnut vertex colors, subtle surface detail, and a soft sheen. Larger inset eyes have round, almost-black night pupils, thin amber iris edges, and animated eyelids. This is an improved game prototype rather than a production AAA animal asset.
@@ -95,7 +98,7 @@ Each room has an optional blue collar and gold pendant. Walk into a pickup to eq
 
 - Collars grant +3%, +6%, or +9% movement speed by tier and survive deaths.
 - Pendants double claw damage and reduce movement hunger drain by 10%, 20%, or 30%. A combat death removes the pendant, not the collar.
-- Clockwork-mouse enemies patrol optional areas, show a warning ring, then pounce. Claw or bite while facing them; every defeat drops a rich fish snack or pendant. Fish snacks add 10 satiety, 9 chonk and 25 snack points, not objective progress. Ordinary spills/vacuum bumps remain nonlethal checkpoint setbacks.
+- Clockwork mice show a warning ring before pouncing. Level two's three cage guards require two claws each; two small marks above each guard show its remaining swipes. In other rooms, claw or bite mice while facing them. Every defeat drops a rich fish snack or pendant. Fish snacks add 10 satiety, 9 chonk and 25 snack points, not objective progress. Ordinary spills/vacuum bumps remain nonlethal checkpoint setbacks.
 - Generated hurdles use the same jump physics as the cat, with conservative height/range margins and reserved run-up/landing space. Planning assumes at least 38 satiety and at most 75 chonk, without equipment or catnip. Hunger/heavy jump restrictions still apply; clear corridors and stairs remain available rather than forcing a blocked jump.
 
 ## Final Vacuum Boss
@@ -143,6 +146,8 @@ This runs in a separate process and does not alter an open Blender scene.
 `tools/vertical-challenges-test.js` walks up and down stairs in all three rooms, compares normal and catnip-assisted long jumps, checks boost expiry and hunger/weight limits, and tests the gallery underside collision.
 
 `tools/adventure-rules-test.js` checks pure equipment, boss, and jump rules without a browser. `tools/adventure-test.js` checks live pickups, enemy kills/loot/deaths, real hurdle jumps, boss weak points, all nine losses/retry, and a keyboard-driven unequipped boss victory.
+
+`tools/rescue-test.js` checks the kitchen cage, independently skinned orange cat, three guards, two swipes with and without a pendant, rejected bites, saved partial progress, opening/escape animation, one-time reward, exit gating and run reset on desktop and emulated touch. These checks place the cat at scenario starts; the full autoplay traverses the mission using movement and claw controls.
 
 `tools/pages-test.js` tests the runtime-only build mounted under `/MegaChonk/`. Pass the live URL to test the hosted version; it checks asset hashes, attribution, level generation, movement, jumping, and browser errors.
 
