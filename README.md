@@ -1,15 +1,14 @@
 # Mega Chonk
 
-This is [the private game repository](https://github.com/detrouvaille-code/MegaChonk-Private), including its Git history and the
-latest local Tactical Tabby work. The existing public repository and hosted
-game remain at their original addresses. Creating this copy does not publish
-a new website.
+This is [the game repository](https://github.com/detrouvaille-code/MegaChonk-Private),
+including its Git history and the latest Tactical Tabby work. The game is hosted
+on GitHub Pages at the play link below.
 
 Mega Chonk is a third-person 3D browser game about cats balancing hunger, weight, and agility across a large house. The default Turkish Van has approximately 193,000 triangles; the selectable custom Tactical Tabby has approximately 304,000. Both are real skinned 3D characters rendered by the locally bundled Three.js engine, with seven skeletal animation clips each.
 
 ## Play Online
 
-**[Play Mega Chonk](https://desmondttm123.github.io/MegaChonk/)**
+**[Play Mega Chonk](https://detrouvaille-code.github.io/MegaChonk-Private/)**
 
 Open the link in a modern browser with WebGL 2 enabled. No installation, Blender, Python, or GitHub account is required to play. On desktop, click **Enter the house** to capture the mouse; press `Esc` to release it. On a phone, touch controls enable automatically without pointer lock. The first load downloads a roughly 10 MB cat model; performance depends on the device.
 
@@ -42,14 +41,13 @@ Artists can improve the playable cat in Blender. Start with the [artist cat guid
 
 ## Deployment
 
-The included **Deploy Mega Chonk** workflow can be started manually from the
-Actions tab. Automatic deployment on pushes is disabled in this private copy.
-Before deploying, configure GitHub Pages with **GitHub Actions** as its source
-and check that the account plan supports Pages for private repositories.
+The included [Deploy Mega Chonk workflow](https://github.com/detrouvaille-code/MegaChonk-Private/actions/workflows/pages.yml)
+can be started manually from the Actions tab. GitHub Pages uses **GitHub Actions**
+as its deployment source. Pushes do not automatically deploy a new version.
 
 `python tools/build_pages.py` creates a runtime-only `dist/` directory, following the game's JavaScript imports and including the cat GLB and required licenses. It excludes Blender projects, printable models, source FBX files, old sprites, test tools, and unused Three.js modules. The editable Blender project remains available in this repository, not in the deployed site.
 
-The build preserves relative URLs so modules and models work under `/MegaChonk/`. A `build-manifest.json` records the deployed revision and asset hashes. No backend, database, or build-time Blender installation is needed.
+The build preserves relative URLs so modules and models work under `/MegaChonk-Private/`. A `build-manifest.json` records the deployed revision and asset hashes. No backend, database, or build-time Blender installation is needed.
 
 ## Controls
 
@@ -179,6 +177,6 @@ clothing/body chonk, phone boot layouts and an independent rescue NPC.
 
 `tools/rescue-test.js` checks the kitchen cage, independently skinned orange cat, three guards, two swipes with and without a pendant, rejected bites, saved partial progress, opening/escape animation, one-time reward, exit gating and run reset on desktop and emulated touch. These checks place the cat at scenario starts; the full autoplay traverses the mission using movement and claw controls.
 
-`tools/pages-test.js` tests the runtime-only build mounted under `/MegaChonk/`. Pass the live URL to test the hosted version; it checks asset hashes, attribution, level generation, movement, jumping, and browser errors.
+`tools/pages-test.js` tests the runtime-only build mounted under `/MegaChonk-Private/`. Pass the live URL to test the hosted version; it checks asset hashes, attribution, level generation, movement, jumping, and browser errors.
 
 `tools/autoplay-test.js [seed] [tactical-tabby]` drives the game with keyboard controls through every meal and pet door on all three levels, then fights the vacuum using the same controls. Omit the character argument for Turkish Van. It fails on an unreachable objective, broken transition, failed boss encounter, browser error, or incorrect final score. The browser tests require Node.js, Playwright, Microsoft Edge, and Python on PATH.

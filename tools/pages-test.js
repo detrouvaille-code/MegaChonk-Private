@@ -7,7 +7,7 @@ const { createHash } = require("crypto");
 
 const root = path.resolve(__dirname, "..");
 const dist = path.join(root, "dist");
-const target = process.argv[2] || "http://127.0.0.1:4177/MegaChonk/";
+const target = process.argv[2] || "http://127.0.0.1:4177/MegaChonk-Private/";
 const remote = Boolean(process.argv[2]);
 const hash = (data) => createHash("sha256").update(data).digest("hex");
 
@@ -22,8 +22,8 @@ const hash = (data) => createHash("sha256").update(data).digest("hex");
       const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".glb": "model/gltf-binary", ".md": "text/plain" };
       server = createServer((request, response) => {
         const pathname = decodeURIComponent(new URL(request.url, target).pathname);
-        if (!pathname.startsWith("/MegaChonk/")) { response.writeHead(404).end(); return; }
-        const file = path.resolve(dist, pathname.slice("/MegaChonk/".length) || "index.html");
+        if (!pathname.startsWith("/MegaChonk-Private/")) { response.writeHead(404).end(); return; }
+        const file = path.resolve(dist, pathname.slice("/MegaChonk-Private/".length) || "index.html");
         if (!file.startsWith(dist + path.sep)) { response.writeHead(403).end(); return; }
         fs.readFile(file, (error, data) => {
           if (error) { response.writeHead(404).end(); return; }

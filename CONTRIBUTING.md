@@ -136,14 +136,14 @@ browser suites. The campaign driver also accepts `tactical-tabby` after its seed
 
 1. Review `git diff` and `git status`; stage only the intended contribution.
 2. Update `MEMORY.md` with what changed, what was tested, what remains, and any decisions.
-3. Commit/push only when authorized. This private copy's Pages workflow is manual-only; pushing `main` does not deploy the game.
+3. Commit/push only when authorized. This repository's Pages workflow is manual-only; pushing `main` does not deploy the game.
 4. Check the Actions result and deployed `build-manifest.json`; a pushed commit is not proof of successful deployment.
 5. For an authorized release, verify the relevant live behavior as well as packaging:
 
 ```powershell
-node tools/pages-test.js https://desmondttm123.github.io/MegaChonk/
-node tools/camera-controls-test.js https://desmondttm123.github.io/MegaChonk/
-node tools/mobile-controls-test.js https://desmondttm123.github.io/MegaChonk/
+node tools/pages-test.js https://detrouvaille-code.github.io/MegaChonk-Private/
+node tools/camera-controls-test.js https://detrouvaille-code.github.io/MegaChonk-Private/
+node tools/mobile-controls-test.js https://detrouvaille-code.github.io/MegaChonk-Private/
 ```
 
 The Pages test compares the served cat's SHA-256 against the local asset. Run it

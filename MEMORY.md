@@ -1,12 +1,13 @@
 # Mega Chonk Project Memory
 
 Last updated: 2026-10-20 (Asia/Shanghai).
-Latest released gameplay baseline: `3a3e447` on `main`.
+Publication baseline for this repository: `b02e51a` on `main`.
 Read current Git history before relying on that baseline; this file is not a live
 deployment status feed.
 
 ## Resume Here
 
+- GitHub Pages publication authorized (2026-10-20): the user changed `detrouvaille-code/MegaChonk-Private` to public and asked to publish the game on github.io. Verified the public repository and clean `main` at `b02e51ac78e246abb6818efac883cd81426cb120`, with no local/remote divergence. Configured Pages to use GitHub Actions with HTTPS at https://detrouvaille-code.github.io/MegaChonk-Private/. Updated current play/source links, contributor deployment commands and the local Pages test mount path. The workflow remains manual-only. Fresh runtime/test syntax, pure adventure/condition rules, 36-file / 39.57 MB packaging and local Pages browser checks passed at the new path. Both complete models and hashes, all three rooms, movement and jumping passed with no browser errors; the existing test reported one accepted fully parsed/hash-verified Tactical Tabby abort notice. Deployment and live verification are pending. Gameplay and model assets are unchanged.
 - Private upload verified (2026-10-20): `main` at `f0a5da5e68aab42c007b41df71da7f82c5417731` was pushed successfully to `detrouvaille-code/MegaChonk-Private`. GitHub's branch reference matched the local commit, its complete tree contained 1,539 files including the custom runtime GLB and editable Blender model, and repository visibility was confirmed private. The independent checkout was clean and tracking the new origin. The original public checkout remained at `e3a342b` with its staged/unstaged work preserved. The large Blender file produced GitHub's advisory size warning but uploaded successfully. No website was deployed.
 - Separate private repository request (2026-10-20): the user chose a new private repository instead of uploading to the existing public repository. Created and confirmed private: https://github.com/detrouvaille-code/MegaChonk-Private, under the user's device-authorized `detrouvaille-code` account. Prepared `MegaChonk-Private` as an independent local copy with the original Git history through `e3a342b58fc9c8a7f7c6b6922e9a55a71e8602af` plus the latest tracked working files, including staged and unstaged Tactical Tabby work. The original checkout and its index are preserved. This copy's Pages workflow is manual-only; no new website deployment was requested. Fresh validation passed all 12 runtime syntax checks, pure adventure/condition rules, the 36-file / 39.57 MB runtime build, and the local Pages browser test (both complete models and hashes, three rooms, movement/jump, no browser errors). No gameplay or model geometry was changed during repository setup; full campaigns and physical-device checks were not repeated. Uploading this copy's `main` is authorized; the public repository is unchanged.
 - Publication authorized (2026-10-19): user asked to host the saved changes in their Git repository. Inspected `main` at `e3a342b`, fetched `origin/main` at `f02c205` (zero remote-only commits); the saved food/rescue commit is included in the authorized publication. Staged the custom character sources, art candidates, mapped fur, seven-action runtime integration, local loading fix, docs and relevant test updates. No runtime geometry/physics changed during release preparation. Fresh syntax, pure adventure/condition rules and runtime packaging passed. The second full custom campaign seed 765432 passed eight meals + rescue + vacuum, 865 XP, 14 jumps / 2 bonks in 5m16s. Existing latest-fur seed 424242 and tactical/vertical/mobile/Pages checks remain separately documented. Upload/deployment evidence will be recorded after verification.
@@ -150,9 +151,10 @@ those are not the current runtime specification.
 
 ## Hosting And Release
 
-- Repository: https://github.com/desmondttm123/MegaChonk (the account ends in `123`).
-- Live game: https://desmondttm123.github.io/MegaChonk/.
-- The original public repository deploys on `main` pushes. This separate private copy has a manual-only `.github/workflows/pages.yml`; Pages is not enabled as part of creating the repository.
+- Current public repository: https://github.com/detrouvaille-code/MegaChonk-Private.
+- Current Pages URL: https://detrouvaille-code.github.io/MegaChonk-Private/.
+- This repository uses a manual-only `.github/workflows/pages.yml` with the Actions deployment source. Start **Deploy Mega Chonk** manually after an authorized release; pushes alone do not deploy.
+- Earlier release evidence below refers to the original source repository, https://github.com/desmondttm123/MegaChonk, and its original Pages host.
 - `python tools/build_pages.py` follows actual module imports and packages only runtime assets/licenses into ignored `dist/`, with revision/hash metadata.
 - Do not upload the whole repo as the website: Blender/FBX/STL, experiments, sprite sheets, and test captures are not required at runtime.
 - CI checks module syntax and builds/deploys; it does not run the Playwright regression suite. Confirm the workflow and live build manifest when verifying a release.

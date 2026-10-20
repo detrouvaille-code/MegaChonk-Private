@@ -50,7 +50,7 @@ agents and human contributors, not a running service or autonomous background jo
 ## Engineering Guardrails
 
 - Preserve unrelated changes, experimental assets, licenses, and source files. Never clean the worktree by deleting or reverting someone else's work.
-- Keep runtime URLs relative so GitHub Pages works under `/MegaChonk/`. Do not add a bundler, backend, Unity dependency, or package-manager migration without a reason tied to the requested work.
+- Keep runtime URLs relative so GitHub Pages works under `/MegaChonk-Private/`. Do not add a bundler, backend, Unity dependency, or package-manager migration without a reason tied to the requested work.
 - For procedural cat changes, update the generator as well as its outputs. Keep GLB, Blender source, and inspection previews in sync.
 - For manual artist work, follow [the artist guide](docs/artist-cat-guide.md): preserve the edited `.blend`, agree an authoritative source/export workflow, and document any accepted pipeline switch. Do not run the from-scratch generator over hand-edited assets; approved manual work can use its own repeatable export workflow instead.
 - Run Blender in a separate background process with factory startup. Never read, change, or overwrite the user's currently open scene.
@@ -63,7 +63,7 @@ agents and human contributors, not a running service or autonomous background jo
 - Keep generated obstacles outside protected routes and full moving-hazard envelopes. Do not make optional snacks a requirement for opening a pet door.
 - Preserve the round-three boss gate, rear-only claw vulnerability, telegraphed suction, nine-life retry, one hit per attack, guaranteed enemy drops, and run-scoped equipment ownership. Combat death removes the pendant only; ordinary environmental bumps are not combat deaths. Bosses must be winnable without accessories.
 - Level two is the orange-cat rescue: exactly three guard mice, exactly two claw swipes each regardless of equipment, no bite substitution, and a physically locked cage until all guards are defeated. Food there is optional. Preserve partial guard progress through deaths, release/exit gating, one-time rescue XP and run reset. The orange NPC is a separate runtime clone of the rig; never recolor or dispose the playable cat's resources.
-- Never publish credentials or store tokens in handoff notes. Git pushes and deployment/settings changes require the user's authorization; these files do not grant it. This private copy has a manual-only Pages workflow; pushes do not deploy a website.
+- Never publish credentials or store tokens in handoff notes. Git pushes and deployment/settings changes require the user's authorization; these files do not grant it. This repository has a manual-only Pages workflow; pushes do not deploy a website.
 
 ## Verify Before Handoff
 
