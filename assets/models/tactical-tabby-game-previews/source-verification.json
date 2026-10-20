@@ -1,0 +1,139 @@
+{
+  "sourceReopened": true,
+  "meshes": 106,
+  "bones": 32,
+  "weightsNormalized": true,
+  "maxBoneInfluences": 4,
+  "referencePacked": true,
+  "clips": [
+    "Idle",
+    "Walk",
+    "Sit",
+    "Groom",
+    "Jump",
+    "Claw",
+    "Bite"
+  ],
+  "sampledContacts": [
+    {
+      "action": "Idle",
+      "fraction": 0.05,
+      "minimumZ": 0.0030014601070433855,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Idle",
+      "fraction": 0.25,
+      "minimumZ": 0.0030000731348991394,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Idle",
+      "fraction": 0.5,
+      "minimumZ": 0.0030000535771250725,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Idle",
+      "fraction": 0.75,
+      "minimumZ": 0.0030019197147339582,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Idle",
+      "fraction": 0.95,
+      "minimumZ": 0.0030000535771250725,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Walk",
+      "fraction": 0.05,
+      "minimumZ": 0.0030000326223671436,
+      "lowestMesh": "TacticalTabby.Paw.Front.R"
+    },
+    {
+      "action": "Walk",
+      "fraction": 0.25,
+      "minimumZ": 0.0030000631231814623,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Walk",
+      "fraction": 0.5,
+      "minimumZ": 0.003000035649165511,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Walk",
+      "fraction": 0.75,
+      "minimumZ": 0.0030000631231814623,
+      "lowestMesh": "TacticalTabby.Paw.Front.R"
+    },
+    {
+      "action": "Walk",
+      "fraction": 0.95,
+      "minimumZ": 0.0030000193510204554,
+      "lowestMesh": "TacticalTabby.Paw.Front.R"
+    },
+    {
+      "action": "Sit",
+      "fraction": 0.05,
+      "minimumZ": 0.0030000577680766582,
+      "lowestMesh": "TacticalTabby.Paw.Front.L"
+    },
+    {
+      "action": "Sit",
+      "fraction": 0.25,
+      "minimumZ": 0.008000005036592484,
+      "lowestMesh": "TacticalTabby.Paw.Hind.L"
+    },
+    {
+      "action": "Sit",
+      "fraction": 0.5,
+      "minimumZ": -0.016230039298534393,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Sit",
+      "fraction": 0.75,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Sit",
+      "fraction": 0.95,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Groom",
+      "fraction": 0.05,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Groom",
+      "fraction": 0.25,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Groom",
+      "fraction": 0.5,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Groom",
+      "fraction": 0.75,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    },
+    {
+      "action": "Groom",
+      "fraction": 0.95,
+      "minimumZ": -0.020584776997566223,
+      "lowestMesh": "TacticalTabby.Leg.Hind.R.Groom"
+    }
+  ]
+}

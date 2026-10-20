@@ -98,6 +98,9 @@ kbd { font: inherit; }
 
 .boot-copy { position: relative; margin: 24px 0 20px; color: var(--muted); font-style: italic; }
 .input-hint { position: relative; max-width: 340px; margin: 0 12px; color: var(--muted); text-align: center; font: 11px/1.5 Georgia, serif; }
+.character-picker { position: relative; display: grid; gap: 6px; margin: 0 0 16px; width: min(290px, 84vw); text-align: center; color: var(--muted); font: 11px/1.4 "Segoe UI", sans-serif; }
+.character-picker select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 5px; background: #291e17; color: var(--ink); font: 13px/1.4 "Segoe UI", sans-serif; }
+.character-picker select:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
 #enter-game,
 #restart-game,
@@ -309,6 +312,9 @@ kbd { color: var(--ink); font-size: 9px; letter-spacing: .05em; }
 }
 
 @media (max-width: 360px) {
+  .boot-mark { height: 42px; margin-bottom: 18px; }
+  .boot-copy { margin: 18px 0 14px; }
+  .character-picker { gap: 4px; margin-bottom: 12px; }
   .touch-stick { width: 110px; height: 110px; left: 12px; }
   .touch-actions { right: 12px; grid-template-columns: repeat(3, 44px); gap: 6px; }
   .touch-actions button { min-height: 44px; font-size: 12px; }
@@ -326,6 +332,8 @@ kbd { color: var(--ink); font-size: 9px; letter-spacing: .05em; }
   .boot-copy { max-width: 500px; margin: 8px 0; font-size: 11px; line-height: 1.3; }
   .eyebrow { margin-bottom: 7px; font-size: 8px; }
   #enter-game { padding: 9px 20px; }
+  .character-picker { gap: 3px; margin-bottom: 8px; }
+  .character-picker select { padding: 6px 10px; font-size: 12px; }
   .load-status { margin: 8px 0; }
   .input-hint { max-width: 520px; font-size: 10px; }
   .boot-credits { margin-top: 6px; }

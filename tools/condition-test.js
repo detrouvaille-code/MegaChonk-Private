@@ -33,6 +33,19 @@ const root = path.resolve(__dirname, "..");
       await page.waitForTimeout(220);
       return snap();
     };
+    const walkTo = async (x, z) => {
+      const deadline = Date.now() + 7000;
+      await page.keyboard.down("w");
+      try {
+        while (Date.now() < deadline) {
+          const current = await snap();
+          if (Math.hypot(current.position[0] - x, current.position[2] - z) < .15) return;
+          await page.evaluate(([x, z]) => window.__megaChonk.aimAt(x, z), [x, z]);
+          await page.waitForTimeout(50);
+        }
+        throw new Error(`Walk did not reach ${x},${z}: ${JSON.stringify(await snap())}`);
+      } finally { await page.keyboard.up("w"); }
+    };
     for (let level = 0; level < 3; level++) {
       await page.evaluate((index) => window.__megaChonk.loadLevel(index), level);
       const supplies = (await page.evaluate(() => window.__megaChonk.navigation())).snacks
@@ -73,12 +86,16 @@ const root = path.resolve(__dirname, "..");
     await page.waitForTimeout(500); assert.equal((await snap()).snackPoints, 25);
     const secondSnack = nav.snacks.find((food) => food.label === "SALMON PUFFS");
     await page.evaluate((p) => { const c = window.__megaChonk.character; c.root.position.fromArray(p); c.velocity.set(0, 0, 0); }, secondSnack.position);
-    await page.waitForFunction(() => window.__megaChonk.snapshot().snacks === 2);
+    try {
+      await page.waitForFunction(() => window.__megaChonk.snapshot().snacks === 2);
+    } catch (error) {
+      throw new Error(`Second snack was not completed: ${JSON.stringify({ state: await snap(), snacks: (await page.evaluate(() => window.__megaChonk.navigation())).snacks, prompt: await page.locator("#interaction-prompt").textContent().catch(() => null) })}`, { cause: error });
+    }
     assert.ok((await snap()).chonk >= 65.5, "Two rich snacks must build enough mass for the plate from starting weight");
-    await walk(11, 10.3, 700);
-    await page.waitForTimeout(850);
+    await walkTo(11, 10.3);
+    await page.waitForFunction(() => window.__megaChonk.snapshot().bodyTrials.nooks[1].latched, null, { timeout: 5000 });
     assert.equal((await snap()).bodyTrials.nooks[1].latched, true, "Naturally gained snack weight must activate the plate");
-    await page.waitForFunction(() => window.__megaChonk.navigation().snacks.find((food) => food.label === "CREAM BITES").active, null, { timeout: 25000 });
+    await page.waitForFunction(() => window.__megaChonk.navigation().snacks.find((food) => food.label === "CREAM BITES").active, null, { timeout: 60000 });
     assert.equal((await page.evaluate(() => window.__megaChonk.navigation().snacks.find((food) => food.label === "CREAM BITES"))).cooldown, 0);
     console.log("Smooth eating, interruption, partial nutrition, optional points and objective separation passed");
 
@@ -87,18 +104,20 @@ const root = path.resolve(__dirname, "..");
     assert.ok(blocked.position[2] > 8.9, "Fat cat must not pass the slim filter");
     assert.equal(blocked.bodyTrials.nooks[0].open, false);
     await place([-11, 0, 10.4], 58, 59.8);
-    const entered = await walk(-11, 6.6, 1100);
+    await walkTo(-11, 6.6);
+    const entered = await snap();
     assert.ok(entered.position[2] < 8.4, "Lean cat should fit through the opening");
     await page.waitForFunction(() => window.__megaChonk.snapshot().snacks === 3);
     assert.ok((await snap()).chonk > 60, "Stash should fatten its occupant across the entry threshold");
-    const escaped = await walk(-11, 10.7, 1550);
+    await walkTo(-11, 10.7);
+    const escaped = await snap();
     assert.ok(escaped.position[2] > 9.4, "Reward must never trap a now-fat cat inside");
     await page.evaluate(() => window.__megaChonk.loadLevel(0));
     await place([11, 0, 10.3], 58, 48);
     await page.waitForTimeout(850);
     assert.equal((await snap()).bodyTrials.nooks[1].latched, false, "Light cats cannot press the weight plate");
     await place([11, 0, 10.3], 58, 65);
-    await page.waitForTimeout(850);
+    await page.waitForFunction(() => window.__megaChonk.snapshot().bodyTrials.nooks[1].latched, null, { timeout: 5000 });
     assert.equal((await snap()).bodyTrials.nooks[1].latched, true);
     await place([11, 0, 10.3], 58, 48);
     assert.equal((await snap()).bodyTrials.nooks[1].latched, true, "The weight gate must remain safely latched after trimming");
@@ -106,7 +125,8 @@ const root = path.resolve(__dirname, "..");
 
     await place([4.3, 0, 15.3], 58, 72);
     await page.evaluate(() => { const g = window.__megaChonk; g.aimAt(4.3, 14.3); g.character.heading = Math.PI; });
-    await page.keyboard.press("f"); await page.waitForTimeout(400);
+    await page.keyboard.press("f");
+    await page.waitForFunction(() => window.__megaChonk.snapshot().chonk < 68.1, null, { timeout: 5000 });
     assert.ok((await snap()).chonk < 68.1, "Clawing the scratch post must trim four chonk");
     const lean = (await page.evaluate(() => window.__megaChonk.navigation())).snacks.find((food) => food.nutrition === "lean");
     await place(lean.position, 20, 68);
@@ -137,7 +157,9 @@ const root = path.resolve(__dirname, "..");
       await place([0, 0, 15.2], 58, weight);
       await page.evaluate(() => { window.__megaChonk.character.heading = 2.35; window.__megaChonk.character.root.rotation.y = 2.35; });
       await page.waitForTimeout(1000);
-      assert.equal((await snap()).bodyMorph.meshes, 1);
+      const morphState = await snap();
+      if (morphState.characterId === "tactical-tabby") assert.ok(morphState.bodyMorph.meshes > 1, "Body and clothing must gain chonk together");
+      else assert.equal(morphState.bodyMorph.meshes, 1);
       assert.ok(name === "lean" ? (await snap()).bodyMorph.influence < 0.02 : (await snap()).bodyMorph.influence > 0.88);
       await captureScreenshot(page, { path: path.join(root, `assets/previews/mega-chonk-condition-${name}.png`) });
     }

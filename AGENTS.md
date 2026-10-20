@@ -15,6 +15,7 @@ agents and human contributors, not a running service or autonomous background jo
 
 - Keep the name Mega Chonk and the house setting, not a dungeon.
 - Use the Turkish Van as the sole default runtime cat: mostly white, brown ears/tail/markings, large dark night pupils.
+- The user also approved the original Tactical Tabby as a selectable playable character. Keep its seven actions, skinning, cosmetic gear and clothing/body chonk; the rescued orange NPC uses the independent Turkish Van-derived template, regardless of player selection.
 - Preserve real skinned 3D rendering and interpolated skeletal animation. Do not revert to directional sprites, low-poly placeholders, or a different model just because its filename says v2/v3.
 - Aim for believable feline proportions and smooth third-person controls inspired by Stray. Do not use proprietary Stray assets or claim the prototype is AAA quality.
 - Keep hunger/chonk changes gradual and eating much faster than movement drain. Balanced condition should feel fastest; hungry/heavy cats have limited jumps.
@@ -40,6 +41,8 @@ agents and human contributors, not a running service or autonomous background jo
 | Page shell and styling | `index.html`, `styles.css` |
 | Active cat asset pipeline | `tools/generate_stray_style_cat.py` |
 | Active runtime/editable cat | `assets/models/turkish-van-game-cat.glb`, matching `.blend` |
+| Selectable custom cat | `assets/models/tactical-tabby-game-cat.glb`, matching `.blend`; `tools/build_tactical_game_cat.py` |
+| Custom fur/texture sources | `tools/tactical_fur.py`; `assets/models/textures/tactical-tabby/`; embedded PBR maps and skinned alpha-masked strands |
 | Runtime-only Pages package | `tools/build_pages.py` |
 | Deployment | `.github/workflows/pages.yml` |
 | Browser verification | `tools/*test.js` |
@@ -60,7 +63,7 @@ agents and human contributors, not a running service or autonomous background jo
 - Keep generated obstacles outside protected routes and full moving-hazard envelopes. Do not make optional snacks a requirement for opening a pet door.
 - Preserve the round-three boss gate, rear-only claw vulnerability, telegraphed suction, nine-life retry, one hit per attack, guaranteed enemy drops, and run-scoped equipment ownership. Combat death removes the pendant only; ordinary environmental bumps are not combat deaths. Bosses must be winnable without accessories.
 - Level two is the orange-cat rescue: exactly three guard mice, exactly two claw swipes each regardless of equipment, no bite substitution, and a physically locked cage until all guards are defeated. Food there is optional. Preserve partial guard progress through deaths, release/exit gating, one-time rescue XP and run reset. The orange NPC is a separate runtime clone of the rig; never recolor or dispose the playable cat's resources.
-- Never publish credentials or store tokens in handoff notes. Git pushes and deployment/settings changes require the user's authorization; these files do not grant it.
+- Never publish credentials or store tokens in handoff notes. Git pushes and deployment/settings changes require the user's authorization; these files do not grant it. This private copy has a manual-only Pages workflow; pushes do not deploy a website.
 
 ## Verify Before Handoff
 

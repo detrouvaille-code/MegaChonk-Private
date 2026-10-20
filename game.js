@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { clone as cloneSkinned } from "three/addons/utils/SkeletonUtils.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -18,6 +19,12 @@ import { createFoodCan } from "./food-visual.js";
 import { RescueMission } from "./rescue-mission.js";
 
 const CAT_SCALE = 0.84;
+const CHARACTERS = {
+  van: { name: "Turkish Van", modelName: "TurkishVanSkinnedRig", path: "./assets/models/turkish-van-game-cat.glb" },
+  "tactical-tabby": { name: "Tactical Tabby", modelName: "TacticalTabbySkinnedRig", path: "./assets/models/tactical-tabby-game-cat.glb?v=3c84497eef98" },
+};
+const characterAssets = new Map();
+let rescueSource = null;
 const CAT_BODY_HEIGHT = 0.76;
 const FOOD_SCALE = 0.70;
 const HOUSE = { width: 46, depth: 42, height: 7.2 };
@@ -29,6 +36,7 @@ const canvas = document.querySelector("#game");
 const ui = {
   boot: document.querySelector("#boot"),
   enter: document.querySelector("#enter-game"),
+  characterSelect: document.querySelector("#character-select"),
   loadStatus: document.querySelector("#load-status"),
   hud: document.querySelector("#hud"),
   satiety: document.querySelector("#satiety-value"),
@@ -218,7 +226,7 @@ let eatingTarget = null;
 const progress = new RunProgress();
 const rescue = new RescueMission({
   root: levelRoot, progress, collider: addCollider, surface: addSurface, sign: addWorldSign,
-  source: () => ({ model: character.model, idle: character.actions.Idle.getClip(), walk: character.actions.Walk.getClip() }),
+  source: () => rescueSource,
   onRescue: () => { state.xp += ORANGE_CAT_RESCUE.xp; },
 });
 let pointStorage;
@@ -1101,48 +1109,92 @@ function makeCatFurDetail() {
   return texture;
 }
 
-async function loadCat() {
-  const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(
-    "./assets/models/turkish-van-game-cat.glb",
-    ({ loaded, total }) => {
-      if (total > 0) ui.loadStatus.textContent = `Loading skinned Turkish Van ${Math.round((loaded / total) * 100)}%`;
-    },
-  );
+async function characterAsset(id) {
+  if (!CHARACTERS[id]) throw new Error("Unknown character");
+  if (!characterAssets.has(id)) {
+    const entry = CHARACTERS[id];
+    characterAssets.set(id, new GLTFLoader().loadAsync(entry.path, ({ loaded, total }) => {
+      if (total > 0) ui.loadStatus.textContent = `Loading ${entry.name} ${Math.round(loaded / total * 100)}%`;
+    }).catch((error) => { characterAssets.delete(id); throw error; }));
+  }
+  return characterAssets.get(id);
+}
 
-  character.model = gltf.scene;
-  character.model.name = "TurkishVanSkinnedRig";
-  character.model.scale.setScalar(CAT_SCALE);
-  const furDetail = makeCatFurDetail();
+function disposePlayerModel() {
+  if (!character.model) return;
+  character.mixer.stopAllAction();
+  character.mixer.uncacheRoot(character.model);
+  const skeletons = new Set();
   character.model.traverse((object) => {
     if (!object.isMesh) return;
-    object.castShadow = true;
+    object.geometry.dispose();
+    (Array.isArray(object.material) ? object.material : [object.material]).forEach((material) => material.dispose());
+    if (object.isSkinnedMesh) skeletons.add(object.skeleton);
+  });
+  skeletons.forEach((skeleton) => skeleton.dispose());
+  character.model.removeFromParent();
+  character.furDetail?.dispose();
+}
+
+async function loadCat(id = "van") {
+  const gltf = await characterAsset(id);
+  const entry = CHARACTERS[id];
+  const clips = Object.fromEntries(CAT_ACTIONS.map((name) => {
+    const clip = gltf.animations.find((candidate) => candidate.name.toLowerCase() === name.toLowerCase());
+    if (!clip) throw new Error(`${entry.name} is missing the ${name} animation`);
+    return [name, clip];
+  }));
+  disposePlayerModel();
+  character.model = cloneSkinned(gltf.scene);
+  character.model.name = entry.modelName;
+  character.model.scale.setScalar(CAT_SCALE);
+  character.id = id;
+  character.actions = {};
+  character.currentAction = null;
+  character.collar = character.pendant = null;
+  character.skinnedMeshCount = character.triangleCount = 0;
+  state.coat = id;
+  const furDetail = makeCatFurDetail();
+  character.furDetail = furDetail;
+  character.model.traverse((object) => {
+    if (!object.isMesh) return;
+    // The opaque coat supplies the shadow silhouette; subpixel fur strands
+    // do not need a second alpha-tested render in every shadow pass.
+    const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material];
+    object.castShadow = !sourceMaterials.some(material => material.name === "TacticalTabby.Fur.GroomedStrands");
     object.receiveShadow = false;
     object.frustumCulled = true;
     if (object.isSkinnedMesh) character.skinnedMeshCount += 1;
-    const geometry = object.geometry;
+    const geometry = object.geometry = object.geometry.clone();
     if (geometry.index) character.triangleCount += geometry.index.count / 3;
     else if (geometry.attributes.position) character.triangleCount += geometry.attributes.position.count / 3;
-    const materials = Array.isArray(object.material) ? object.material : [object.material];
-    for (const material of materials) {
-      if (!material) continue;
-      if (material.name === "TurkishVan.Fur") {
+    const materials = (Array.isArray(object.material) ? object.material : [object.material]).map((source) => {
+      const material = source.clone();
+      if (material.name === "TurkishVan.Fur" || material.name.startsWith("TacticalTabby.Fur.")) {
         const fur = new THREE.MeshPhysicalMaterial({
           name: material.name,
           color: material.color,
-          vertexColors: true,
+          vertexColors: Boolean(geometry.attributes.color),
+          map: material.map,
+          normalMap: material.normalMap,
+          normalScale: material.normalScale,
+          alphaTest: material.alphaTest,
+          side: material.side,
           roughness: 0.94,
           sheen: 0.55,
           sheenColor: new THREE.Color(0xd1c5b0),
           sheenRoughness: 0.85,
-          bumpMap: furDetail,
+          bumpMap: material.normalMap ? null : furDetail,
           bumpScale: 0.006,
         });
-        object.material = fur;
+        material.dispose();
+        return fur;
       }
       if ("envMapIntensity" in material) material.envMapIntensity = 0.72;
       material.needsUpdate = true;
-    }
+      return material;
+    });
+    object.material = Array.isArray(object.material) ? materials : materials[0];
   });
   character.root.add(character.model);
   const neck = character.model.getObjectByName("Neck");
@@ -1160,9 +1212,7 @@ async function loadCat() {
 
   character.mixer = new THREE.AnimationMixer(character.model);
   for (const name of CAT_ACTIONS) {
-    const clip = gltf.animations.find((candidate) => candidate.name.toLowerCase().includes(name.toLowerCase()));
-    if (!clip) throw new Error(`Turkish Van model is missing the ${name} animation clip`);
-    const action = character.mixer.clipAction(clip);
+    const action = character.mixer.clipAction(clips[name]);
     const once = ["Sit", "Jump", "Claw", "Bite"].includes(name);
     action.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
     action.clampWhenFinished = once;
@@ -1179,7 +1229,7 @@ async function loadCat() {
   character.chonkMorph = installChonkMorph(character.model);
   character.visualMode = "skinned-mesh";
 
-  character.shadow = new THREE.Mesh(
+  if (!character.shadow) character.shadow = new THREE.Mesh(
     new THREE.PlaneGeometry(1, 1),
     new THREE.MeshBasicMaterial({
       color: 0xffffff,
@@ -1197,6 +1247,26 @@ async function loadCat() {
   scene.add(character.shadow);
 
   setAction("Idle", 0);
+}
+
+async function chooseCharacter() {
+  if (state.started) return;
+  const previous = character.id || "van";
+  state.ready = false;
+  ui.enter.disabled = ui.characterSelect.disabled = true;
+  try {
+    await loadCat(ui.characterSelect.value);
+    try { pointStorage?.setItem("mega-chonk-character", character.id); } catch { /* Session-only choice. */ }
+    ui.loadStatus.textContent = `${CHARACTERS[character.id].name} ready · Three rooms to explore`;
+  } catch (error) {
+    ui.characterSelect.value = previous;
+    ui.loadStatus.textContent = "That character could not load. Try selecting it again.";
+    console.error(error);
+  } finally {
+    state.ready = Boolean(character.model);
+    ui.enter.disabled = !state.ready;
+    ui.characterSelect.disabled = false;
+  }
 }
 
 function jumpProfile() {
@@ -2109,12 +2179,28 @@ async function init() {
   setupInput();
   camera.position.set(0, 2.2, 12);
   camera.lookAt(0, 0.8, 7);
-  await loadCat();
+  const van = await characterAsset("van");
+  van.scene.scale.setScalar(CAT_SCALE);
+  rescueSource = { model: van.scene, idle: van.animations.find((clip) => clip.name === "Idle"), walk: van.animations.find((clip) => clip.name === "Walk") };
+  let selected = new URLSearchParams(location.search).get("character");
+  if (!CHARACTERS[selected]) {
+    try { selected = pointStorage?.getItem("mega-chonk-character"); } catch { /* Use default. */ }
+  }
+  ui.characterSelect.value = CHARACTERS[selected] ? selected : "van";
+  try {
+    await loadCat(ui.characterSelect.value);
+  } catch (error) {
+    if (ui.characterSelect.value === "van") throw error;
+    ui.characterSelect.value = "van";
+    await loadCat("van");
+  }
   state.ready = true;
-  ui.enter.disabled = false;
-  ui.loadStatus.textContent = "Turkish Van ready · Three rooms to explore";
+  ui.enter.disabled = ui.characterSelect.disabled = false;
+  ui.loadStatus.textContent = `${CHARACTERS[character.id].name} ready · Three rooms to explore`;
+  ui.characterSelect.addEventListener("change", chooseCharacter);
   ui.enter.addEventListener("click", () => {
     state.started = true;
+    ui.characterSelect.disabled = true;
     state.runStartedAt = performance.now();
     ui.boot.classList.add("is-gone");
     ui.hud.classList.remove("is-hidden");
@@ -2281,6 +2367,8 @@ window.__megaChonk = {
     triangles: character.triangleCount,
     visualMode: character.visualMode,
     modelName: character.model?.name ?? null,
+    characterId: character.id,
+    characterName: CHARACTERS[character.id]?.name,
     animationClips: character.clipCount,
     skinnedMeshes: character.skinnedMeshCount,
     catScale: CAT_SCALE,

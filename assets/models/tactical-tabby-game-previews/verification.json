@@ -1,0 +1,25 @@
+{
+  "blender": "3.4.1",
+  "meshes": 106,
+  "triangles": 303788,
+  "bones": 32,
+  "skinnedMeshes": 106,
+  "clips": [
+    "Bite_TacticalTabby.GameRig",
+    "Claw_TacticalTabby.GameRig",
+    "Groom_TacticalTabby.GameRig",
+    "Idle_TacticalTabby.GameRig",
+    "Jump_TacticalTabby.GameRig",
+    "Sit_TacticalTabby.GameRig",
+    "Walk_TacticalTabby.GameRig"
+  ],
+  "coat": {
+    "surfaceTexture": "Kitten soft undercoat - generated art",
+    "normalTexture": "kitten-fur-normal",
+    "atlas": "Kitten fur card atlas - generated art",
+    "groomedSurfaces": 13
+  },
+  "source": "Original character geometry based on user references; no canonical cat mesh reused",
+  "glbSha256": "3c84497eef98cb7e65d6c20d00224647dbd90b721b88be903c0641d6108eee27",
+  "glbBytes": 26933024
+}

@@ -1,0 +1,31 @@
+{
+  "blender": "3.4.1",
+  "meshes": 156,
+  "triangles": 91204,
+  "armatures": 1,
+  "skinnedMeshes": 156,
+  "clips": [
+    "Idle_TacticalTabby.Rig",
+    "LookAround_TacticalTabby.Rig",
+    "PawWave_TacticalTabby.Rig",
+    "TailWag_TacticalTabby.Rig"
+  ],
+  "sourceReference": "User supplied IMG_0664.jpg front / side / rear drawing",
+  "status": "Separate seated artist candidate; not integrated into gameplay",
+  "glbStructureValidated": true,
+  "browserChecks": {
+    "engine": "Microsoft Edge / Three.js 0.186.0",
+    "loadedMeshes": 156,
+    "loadedSkinnedMeshes": 156,
+    "loadedMotions": [
+      "Idle",
+      "LookAround",
+      "PawWave",
+      "TailWag"
+    ],
+    "sampledBoneTransformsFinite": true,
+    "controlsAndTurntable": true,
+    "phoneViewport": "390x844, no horizontal overflow",
+    "browserErrors": []
+  }
+}

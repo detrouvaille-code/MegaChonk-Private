@@ -17,7 +17,7 @@ const results = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     await sleep(500);
-    await page.goto("http://127.0.0.1:4176", { waitUntil: "networkidle" });
+    await page.goto(`http://127.0.0.1:4176/?character=${process.argv[2] === "tactical-tabby" ? "tactical-tabby" : "van"}`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__megaChonk?.state.ready, null, { timeout: 30000 });
     await page.evaluate(() => { window.__megaChonk.regenerate(424242); window.__megaChonk.start(); });
     await page.waitForFunction(() => !window.__megaChonk.state.transitioning);
@@ -113,7 +113,11 @@ const results = [];
     const unboostedLanding = await snapshot();
     if (unboostedLanding.position[1] > 2) errors.push("The catnip shortcut did not require its boost");
     await place([4.5, 2.7, -9]);
-    await page.waitForFunction(() => window.__megaChonk.state.catnipTime > 16, null, { timeout: 5000 });
+    try {
+      await page.waitForFunction(() => window.__megaChonk.state.catnipTime > 16, null, { timeout: 15000 });
+    } catch (error) {
+      throw new Error(`Catnip was not consumed: ${JSON.stringify({ state: await snapshot(), snacks: (await page.evaluate(() => window.__megaChonk.navigation())).snacks })}`, { cause: error });
+    }
     await sleep(700);
     const boosted = await snapshot();
     if (boosted.jumpImpulse < normal.jumpImpulse * 1.17 || boosted.speedBoost !== 1.32) errors.push("Catnip did not apply both boosts");

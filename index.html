@@ -23,6 +23,12 @@
       <p class="eyebrow">Three rooms. Nine lives. One appetite.</p>
       <h1>MEGA<br /><em>CHONK</em></h1>
       <p class="boot-copy">Find supper and rescue a caged orange cat. Treats earn points and chonk. Stay lean to leap; claw the scratch post to trim down.</p>
+      <label class="character-picker" for="character-select">Choose your cat
+        <select id="character-select" disabled>
+          <option value="van">Turkish Van</option>
+          <option value="tactical-tabby">Tactical Tabby — your orange cat</option>
+        </select>
+      </label>
       <button id="enter-game" type="button" disabled>Enter the house</button>
       <p id="load-status" class="load-status">Preparing the house...</p>
       <p id="input-hint" class="input-hint">WASD to move. Mouse to look. Space to jump.</p>
@@ -103,6 +109,6 @@
       <button id="retry-room" type="button">Wake up and continue</button>
     </section>
     <div class="vignette" aria-hidden="true"></div>
-    <script type="module" src="./game.js"></script>
+    <script type="module" src="./game.js?v=tactical-fur-20261019"></script>
   </body>
 </html>

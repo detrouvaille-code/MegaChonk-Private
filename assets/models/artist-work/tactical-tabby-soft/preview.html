@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Tabby · Softer revision</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E🐈%3C/text%3E%3C/svg%3E">
+  <style>
+    *{box-sizing:border-box}body{margin:0;color:#1b3434;background:#dce5df;font:15px/1.5 system-ui,sans-serif}canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}header{position:absolute;top:32px;left:36px;pointer-events:none}header p{margin:0;font-size:11px;letter-spacing:.18em;text-transform:uppercase}h1{font:500 clamp(24px,4vw,38px)/1.2 Georgia,serif;margin:9px 0}header span{font-size:13px;color:#48615d}.panel{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:center;padding:13px 17px;background:#f6f5edee;border:1px solid #c6d2c9;border-radius:16px;box-shadow:0 8px 32px #16322b12;max-width:calc(100vw - 28px);width:max-content}button,select,a{font:inherit;color:#203b36;border:1px solid #c9d4ca;border-radius:8px;padding:8px 12px;background:#fffdf6;cursor:pointer;text-decoration:none}button:hover,a:hover{background:#e9eee4}button[aria-pressed=true]{background:#24453c;color:#fffef3}select{max-width:160px}#status{position:absolute;right:28px;top:35px;text-align:right;color:#4d6861;font-size:12px}#error{color:#913e30}@media(max-width:650px){header{top:22px;left:22px}header span{display:block;max-width:220px}#status{top:125px;right:22px}.panel{bottom:16px;gap:6px;padding:10px}.panel button,.panel select,.panel a{font-size:12px;padding:7px 9px}}
+  </style>
+  <script type="importmap">{"imports":{"three":"./viewer-vendor/build/three.module.js","three/addons/":"./viewer-vendor/examples/jsm/"}}</script>
+</head>
+<body>
+  <canvas id="view" aria-label="Interactive 3D model of the orange tactical tabby cat"></canvas>
+  <header><p>Your character · Softer revision</p><h1>Tactical Tabby</h1><span>Drag to turn · Scroll or pinch to zoom</span></header>
+  <div id="status" role="status">Loading your 3D character…</div>
+  <nav class="panel" aria-label="Character preview controls">
+    <button data-view="hero">¾ view</button><button data-view="front">Front</button><button data-view="side">Side</button><button data-view="rear">Back</button>
+    <button id="rotate" aria-pressed="false">Turntable</button>
+    <select id="motion" aria-label="Preview animation"><option>Loading…</option></select>
+    <a href="./tactical-tabby.glb" download>GLB ↓</a>
+  </nav>
+  <script type="module">
+    import * as THREE from 'three';
+    import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+    import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+    const renderer=new THREE.WebGLRenderer({canvas:document.querySelector('#view'),antialias:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0xdce5df);
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
+    const scene=new THREE.Scene();scene.add(new THREE.HemisphereLight(0xf9f4e2,0x657d70,1.4));
+    for(const [p,color,intensity] of [[[ -3,5,4],0xffe6bf,2.5],[[4,3,2],0xd8e8ff,1.4],[[1,4,-4],0xfff1ce,2.0]]){
+      const light=new THREE.DirectionalLight(color,intensity);light.position.set(...p);scene.add(light);
+      if(p[0]<0){light.castShadow=true;light.shadow.mapSize.set(2048,2048);light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=4;light.shadow.camera.bottom=-3;light.shadow.normalBias=.025;}
+    }
+    const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0xdce5df,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.014;floor.receiveShadow=true;scene.add(floor);
+    const camera=new THREE.PerspectiveCamera(33,innerWidth/innerHeight,.05,100);camera.position.set(4,2.9,7);
+    const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(.1,1.34,0);controls.enableDamping=true;controls.minDistance=2.8;controls.maxDistance=13;controls.maxPolarAngle=Math.PI*.49;controls.autoRotateSpeed=1.3;
+    const status=document.querySelector('#status'),motion=document.querySelector('#motion');
+    let mixer,active;
+    const clock=new THREE.Clock();
+    function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}resize();addEventListener('resize',resize);
+    const positions={hero:[4,2.9,7],front:[0,2.0,8],side:[8,2.0,0],rear:[0,2.0,-8]};
+    for(const button of document.querySelectorAll('[data-view]'))button.addEventListener('click',()=>{camera.position.set(...positions[button.dataset.view]);controls.target.set(.1,1.34,0);controls.update();});
+    document.querySelector('#rotate').addEventListener('click',e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.setAttribute('aria-pressed',String(controls.autoRotate));});
+    try{
+      const gltf=await new GLTFLoader().loadAsync('./tactical-tabby.glb');scene.add(gltf.scene);
+      let meshes=0,triangles=0,skinned=0;
+      gltf.scene.traverse(obj=>{if(obj.isMesh){meshes++;obj.castShadow=true;obj.receiveShadow=false;triangles+=(obj.geometry.index?.count??obj.geometry.attributes.position.count)/3;if(obj.isSkinnedMesh)skinned++;}});
+      mixer=new THREE.AnimationMixer(gltf.scene);motion.replaceChildren();
+      for(const clip of gltf.animations){const option=document.createElement('option');option.value=clip.name;option.textContent=clip.name.replace(/_/g,' ');motion.append(option);}
+      const still=document.createElement('option');still.value='still';still.textContent='Still pose';motion.append(still);
+      function play(){if(active)active.stop();const clip=gltf.animations.find(c=>c.name===motion.value);active=clip?mixer.clipAction(clip).reset().play():null;}
+      motion.addEventListener('change',play);motion.value=gltf.animations.find(c=>c.name==='Idle')?.name??gltf.animations[0]?.name;play();
+      const bounds=new THREE.Box3().setFromObject(gltf.scene);status.textContent=`${Math.round(triangles/1000)}k triangles · ${gltf.animations.length} motions`;
+      window.__tabby={ready:true,model:gltf.scene,animations:gltf.animations,mixer,controls,camera,renderer,meshes,skinned,triangles,bounds};
+    }catch(error){status.id='error';status.textContent=error.message;console.error(error);}
+    renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);mixer?.update(dt);controls.update();renderer.render(scene,camera);});
+  </script>
+</body>
+</html>

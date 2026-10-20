@@ -1,5 +1,19 @@
 # Artist Guide: Improving The Mega Chonk Cat
 
+This guide's detailed mesh/bone contract describes the default Turkish Van.
+The user has also approved a selectable original **Tactical Tabby**. Its separate
+gameplay files are `assets/models/tactical-tabby-game-cat.blend` and `.glb`, built
+by `tools/build_tactical_game_cat.py`. It has 32 bones, seven named game clips and
+authored `Chonk` shapes for the body and clothing. Do not replace either cat by
+regenerating the other. The seated art candidates in `artist-work/` are preserved
+separately and are not the playable asset.
+
+The 2026-10-19 custom-coat pipeline also uses `tools/tactical_fur.py` and editable
+PNGs in `assets/models/textures/tactical-tabby/`. The custom GLB embeds its maps
+and skinned alpha-masked strands; the loader preserves their UV color/normal
+maps and cutoff. See [coat remodel](tactical-fur-remodel.md). The default Van's
+material contract below remains distinct.
+
 Yes: an artist can sculpt a better cat, improve its coat and face, and replace
 its animations in Blender. They do not need to write gameplay code. A developer
 should help integrate changes to the skeleton, material system, or asset format.

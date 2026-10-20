@@ -1,6 +1,11 @@
 # Mega Chonk
 
-Mega Chonk is a third-person 3D browser game about a Turkish Van balancing hunger, weight, and agility across a large house. Its cat is a real skinned 3D character, rendered by the locally bundled Three.js engine, with approximately 193,000 triangles and seven skeletal animation clips.
+This is [the private game repository](https://github.com/detrouvaille-code/MegaChonk-Private), including its Git history and the
+latest local Tactical Tabby work. The existing public repository and hosted
+game remain at their original addresses. Creating this copy does not publish
+a new website.
+
+Mega Chonk is a third-person 3D browser game about cats balancing hunger, weight, and agility across a large house. The default Turkish Van has approximately 193,000 triangles; the selectable custom Tactical Tabby has approximately 304,000. Both are real skinned 3D characters rendered by the locally bundled Three.js engine, with seven skeletal animation clips each.
 
 ## Play Online
 
@@ -20,6 +25,13 @@ python -m http.server 4173 --bind 127.0.0.1
 
 Then open `http://127.0.0.1:4173`.
 
+To open the remodeled orange character directly, use
+[Tactical Tabby locally](http://127.0.0.1:4173/?character=tactical-tabby&v=tactical-fur-20261019).
+The Windows launcher avoids the broken Store Python alias when the installed
+Python manager is available. It serves fresh local files, opens the browser
+after binding the port, and safely reuses a matching checkout already running.
+For a server without opening a browser, run `start-game.bat --no-browser`.
+
 For local development, keep the server running; opening `index.html` directly will not load JavaScript modules reliably. The hosted version needs no local server.
 
 ## Contributor Handoff
@@ -30,13 +42,23 @@ Artists can improve the playable cat in Blender. Start with the [artist cat guid
 
 ## Deployment
 
-The [Deploy Mega Chonk workflow](https://github.com/desmondttm123/MegaChonk/actions/workflows/pages.yml) deploys pushes to `main` automatically using GitHub Pages. It can also be started manually from the Actions tab. Pages must use **GitHub Actions** as its deployment source in the repository settings.
+The included **Deploy Mega Chonk** workflow can be started manually from the
+Actions tab. Automatic deployment on pushes is disabled in this private copy.
+Before deploying, configure GitHub Pages with **GitHub Actions** as its source
+and check that the account plan supports Pages for private repositories.
 
 `python tools/build_pages.py` creates a runtime-only `dist/` directory, following the game's JavaScript imports and including the cat GLB and required licenses. It excludes Blender projects, printable models, source FBX files, old sprites, test tools, and unused Three.js modules. The editable Blender project remains available in this repository, not in the deployed site.
 
 The build preserves relative URLs so modules and models work under `/MegaChonk/`. A `build-manifest.json` records the deployed revision and asset hashes. No backend, database, or build-time Blender installation is needed.
 
 ## Controls
+
+Choose **Tactical Tabby — your orange cat** on the start screen to play as the
+custom orange cat with its black vest, radio and headset. Turkish Van remains
+the default. The choice is remembered in this browser; reload to choose again
+before starting a new run. Both characters use the same controls and physics.
+The vest and headset are cosmetic; collar and pendant pickups keep their normal
+effects. This is a stylized browser-game model of the supplied reference.
 
 - `WASD` or arrow keys: camera-relative movement
 - `Shift`: trot
@@ -114,6 +136,10 @@ Future bosses can reuse the encounter state machine with different phase definit
 - `assets/models/turkish-van-game-cat.glb`: runtime skinned Turkish Van and all seven animations
 - `assets/models/turkish-van-game-cat.blend`: editable model, materials, skeleton, and animation source
 - `tools/generate_stray_style_cat.py`: reproducible Blender preparation and export pipeline
+- `assets/models/tactical-tabby-game-cat.glb` and matching `.blend`: original custom cat with seven skeletal animations
+- `tools/build_tactical_game_cat.py`: custom gameplay geometry, 32-bone rig, paw-target animation and chonk shapes; reuses the project IK authoring helpers without the Turkish Van mesh
+- `assets/models/tactical-tabby-game-previews/`: custom character pose renders and export verification
+- `tools/tactical_fur.py` and `assets/models/textures/tactical-tabby/`: UV-mapped coat detail and fine skinned strands; see [fur remodel](docs/tactical-fur-remodel.md)
 - `assets/models/game-cat-previews/`: Blender inspection renders
 - `assets/models/source/jonas-dichelle-cat/ATTRIBUTION.md`: base mesh source and license
 - `assets/models/sitting-turkish-van-cat.stl`: separate printable sitting model
@@ -135,6 +161,10 @@ This runs in a separate process and does not alter an open Blender scene.
 
 `tools/smoke-test.js` checks skinned mesh loading, exported coat colors, all action states, movement orientation, grooming interruption, satiety drain, jump limits, house systems, and screenshots.
 
+`tools/tactical-character-test.js [URL]` checks the character selector, remembered
+choice, switching back and forth, seven custom actions, sampled pose bounds,
+clothing/body chonk, phone boot layouts and an independent rescue NPC.
+
 `tools/visual-cat-test.js` captures four viewing angles and several animation poses, checks night-pupil colors and eye aperture size, samples deformed geometry for floor penetration, and reports frame timing.
 
 `tools/generation-test.js` checks 90 seeded layouts across all three rooms for reproducibility, obstacle counts, overlapping obstacles, protected corridors, and routes through the actual collision/hazard geometry to every ground-floor objective and the stairs.
@@ -151,4 +181,4 @@ This runs in a separate process and does not alter an open Blender scene.
 
 `tools/pages-test.js` tests the runtime-only build mounted under `/MegaChonk/`. Pass the live URL to test the hosted version; it checks asset hashes, attribution, level generation, movement, jumping, and browser errors.
 
-`tools/autoplay-test.js [seed]` drives the game with keyboard controls through every meal and pet door on all three levels, then fights the vacuum using the same controls. It fails on an unreachable objective, broken transition, failed boss encounter, browser error, or incorrect final score. The browser tests require Node.js, Playwright, Microsoft Edge, and Python on PATH.
+`tools/autoplay-test.js [seed] [tactical-tabby]` drives the game with keyboard controls through every meal and pet door on all three levels, then fights the vacuum using the same controls. Omit the character argument for Turkish Van. It fails on an unreachable objective, broken transition, failed boss encounter, browser error, or incorrect final score. The browser tests require Node.js, Playwright, Microsoft Edge, and Python on PATH.

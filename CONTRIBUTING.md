@@ -53,8 +53,11 @@ node tools/mobile-controls-test.js
 node tools/generation-test.js
 node tools/vertical-challenges-test.js
 node tools/visual-cat-test.js
+node tools/tactical-character-test.js
 node tools/autoplay-test.js 424242
 node tools/autoplay-test.js 765432
+node tools/autoplay-test.js 424242 tactical-tabby
+node tools/autoplay-test.js 765432 tactical-tabby
 node tools/pages-test.js
 ```
 
@@ -68,6 +71,7 @@ node tools/pages-test.js
 | Touch controls or mobile layout | Mobile controls, camera controls, smoke, Pages; autoplay if shared movement changes |
 | Random layouts or house/cat scale | Generation, smoke, vertical challenges, both autoplay seeds, visual review |
 | Cat geometry/materials/rig/animation | Blender re-import verification, smoke, visual inspection; vertical/autoplay if movement bounds change |
+| Character choice/custom cat | Tactical character integration, default smoke/visual/rescue, custom vertical/mobile/condition, both custom autoplay seeds and local Pages |
 | Packaging/imports/deployment | Syntax, runtime-only build, local Pages test, then live checks when release is authorized |
 | Documentation only | Check paths, commands, current-source consistency, Markdown links, and diff; no need to regenerate assets or replay unchanged gameplay |
 
@@ -109,11 +113,30 @@ contact, and animation poses visually; increasing mesh density alone does not
 verify quality. Preserve POINT-domain vertex colors and source attribution.
 The standalone printable sitting model has a separate generator.
 
+The custom gameplay cat is built separately with `tools/build_tactical_game_cat.py`.
+It uses `build_tactical_tabby.py` geometry helpers and the project's IK/animation
+authoring helpers from `generate_stray_style_cat.py`; it does not call that
+generator's main function or import the Turkish Van mesh. Keep candidate art,
+custom gameplay Blender/GLB and canonical Turkish Van assets separate. Custom
+geometry/posing differs from the reference render; review actual game captures.
+
+The custom coat uses `tools/tactical_fur.py`, source PNGs under
+`assets/models/textures/tactical-tabby/`, embedded PBR maps and alpha-masked
+skinned strands. Preserve texture/UV/color/normal-map handling in `loadCat()`.
+The tactical browser test checks those actual runtime materials as well as
+animation poses. The Pages test compares complete rendered mesh/triangle counts
+against the export/re-import report and verifies the served GLB hash.
+
+Use `node tools/vertical-challenges-test.js tactical-tabby` for custom stairs and
+jumps. With a local server running on port 4173, pass
+`http://127.0.0.1:4173/?character=tactical-tabby` to the condition and mobile
+browser suites. The campaign driver also accepts `tactical-tabby` after its seed.
+
 ## Release And Handoff
 
 1. Review `git diff` and `git status`; stage only the intended contribution.
 2. Update `MEMORY.md` with what changed, what was tested, what remains, and any decisions.
-3. Commit/push only when authorized. Pushing `main` deploys the game automatically.
+3. Commit/push only when authorized. This private copy's Pages workflow is manual-only; pushing `main` does not deploy the game.
 4. Check the Actions result and deployed `build-manifest.json`; a pushed commit is not proof of successful deployment.
 5. For an authorized release, verify the relevant live behavior as well as packaging:
 

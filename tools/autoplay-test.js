@@ -6,6 +6,7 @@ const defeatVacuum = require("./boss-driver");
 
 const PORT = 4174;
 const requestedSeed = Number(process.argv[2] ?? 424242);
+const characterId = process.argv[3] === "tactical-tabby" ? "tactical-tabby" : "van";
 const RUN_SEED = Number.isFinite(requestedSeed) ? Math.abs(Math.trunc(requestedSeed)) : 424242;
 const GRID = 0.55;
 
@@ -190,6 +191,7 @@ function planRoute(navigation, target) {
   let page;
   const browserErrors = [];
   const levelRuns = [];
+  let roomContinues = 0;
 
   async function navigation() {
     return page.evaluate(() => window.__megaChonk.navigation());
@@ -203,22 +205,25 @@ function planRoute(navigation, target) {
 
   async function driveTo(target, options = {}) {
     let initial = await navigation();
+    const objectiveEaten = (nav) => options.foodIndex !== undefined && !nav.foods.some(food => food.index === options.foodIndex);
+    if (objectiveEaten(initial)) return { reached: true, navigation: initial, route: [] };
     const stairs = initial.verticalRoutes[0]?.stairs;
     if (!options.routeStage && stairs) {
       const ascending = target[1] > 2 && initial.position[1] < 2;
-      const descending = target[1] < 1 && initial.position[1] > 2;
+      const descending = target[1] < 1 && initial.grounded && Math.abs(initial.position[1] - 2.7) < .2;
       if (ascending || descending) {
         const stages = ascending ? [stairs.entry, stairs.top] : [stairs.top, stairs.entry];
         for (const [index, waypoint] of stages.entries()) {
           const result = await driveTo(waypoint, {
-            level: options.level, routeStage: true,
+            level: options.level, routeStage: true, foodIndex: options.foodIndex,
             direct: descending || index === 1, stairs: true, timeout: 25000, tolerance: 0.38,
           });
+          if (objectiveEaten(result.navigation)) return { ...result, reached: true };
           if (!result.reached) return result;
         }
       }
     }
-    const startedAt = Date.now();
+    let startedAt = Date.now();
     const expectedLevel = options.level;
     const targetIndex = options.foodIndex;
     let nav = await navigation();
@@ -230,13 +235,39 @@ function planRoute(navigation, target) {
     let lastMotionPosition = nav.position;
     let lastBonks = nav.bonks;
     let shiftHeld = false;
+    let waitingForRecovery = false;
     await page.keyboard.down("w");
 
     while (Date.now() - startedAt < (options.timeout ?? 30000)) {
       nav = await navigation();
-      if (nav.gameComplete || nav.level !== expectedLevel || nav.transitioning) {
+      if (nav.gameComplete || nav.level !== expectedLevel || nav.stage === "boss") {
         await releaseMovement();
         return { reached: true, navigation: nav, route };
+      }
+      if (nav.transitioning) {
+        // A checkpoint/combat recovery can show the same overlay as room
+        // completion. It does not mean this destination has been reached.
+        await releaseMovement();
+        if (await page.locator("#retry-room").isVisible()) {
+          if (roomContinues >= 3) throw new Error("Campaign exceeded three normal room continues");
+          roomContinues += 1;
+          await page.click("#retry-room");
+          startedAt = Date.now();
+          console.log(`[autoplay] Continued the room through its normal retry button (${roomContinues})`);
+        }
+        shiftHeld = false;
+        waitingForRecovery = true;
+        lastMotionAt = Date.now();
+        await sleep(80);
+        continue;
+      }
+      if (waitingForRecovery) {
+        waitingForRecovery = false;
+        route = options.direct ? [target] : planRoute(nav, target);
+        waypointIndex = 0;
+        lastPlan = Date.now();
+        lastMotionPosition = nav.position;
+        await page.keyboard.down("w");
       }
       if (targetIndex !== undefined && !nav.foods.some((food) => food.index === targetIndex)) {
         await releaseMovement();
@@ -306,7 +337,7 @@ function planRoute(navigation, target) {
     page.on("console", (message) => {
       if (message.type() === "error") browserErrors.push(`console:${message.text()}`);
     });
-    await page.goto(`http://127.0.0.1:${PORT}`, { waitUntil: "networkidle" });
+    await page.goto(`http://127.0.0.1:${PORT}/?character=${characterId}`, { waitUntil: "networkidle" });
     await page.waitForFunction(() => window.__megaChonk?.state?.ready === true, null, { timeout: 30000 });
     await page.evaluate((seed) => window.__megaChonk.regenerate(seed), RUN_SEED);
     await page.click("#enter-game");
@@ -339,7 +370,7 @@ function planRoute(navigation, target) {
           const approach = [guard.home[0], 0, guard.home[2] + 2.8];
           if (!(await driveTo(approach, { level, timeout: 35000, tolerance: 0.3 })).reached) throw new Error(`Could not reach rescue guard ${guard.id}`);
           const started = Date.now();
-          while (Date.now() - started < 45000) {
+          while (Date.now() - started < 90000) {
             nav = await navigation();
             const current = nav.adventure.enemies.find((enemy) => enemy.id === guard.id);
             if (!current.active) { levelRun.guards.push(guard.id); break; }
@@ -382,6 +413,7 @@ function planRoute(navigation, target) {
             timeout: 28000,
           });
           if (!result.reached) {
+            if (!result.navigation.foods.some(food => food.index === selected.food.index)) { consumed = true; break; }
             throw new Error(`Could not reach ${selected.food.label} on level ${level + 1}: ${JSON.stringify(result.navigation)}`);
           }
           await releaseMovement();

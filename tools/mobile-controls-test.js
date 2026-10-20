@@ -24,7 +24,14 @@ const target = process.argv[2] || "http://127.0.0.1:4180/";
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     if (server) await page.waitForTimeout(500);
     await page.goto(target, { waitUntil: "networkidle" });
-    await page.waitForFunction(() => window.__megaChonk?.state.ready, null, { timeout: 60000 });
+    try {
+      await page.waitForFunction(() => window.__megaChonk?.state.ready, null, { timeout: 60000 });
+    } catch (error) {
+      console.error("Mobile boot diagnostics", { errors, status: await page.locator("#load-status").textContent() });
+      throw error;
+    }
+    const requestedCharacter = new URL(target).searchParams.get("character");
+    if (requestedCharacter) assert.equal(await page.evaluate(() => window.__megaChonk.character.id), requestedCharacter, "The requested custom character must actually load");
     assert.equal(await page.getAttribute("#touch-toggle", "aria-pressed"), "true", "Phone should default to touch controls");
     assert.equal(await page.locator("#touch-controls").isVisible(), false, "Controls must not cover the boot screen");
     const client = await context.newCDPSession(page);
@@ -244,9 +251,21 @@ const target = process.argv[2] || "http://127.0.0.1:4180/";
     assert.deepEqual(errors, []);
     await context.close();
     console.log("Mobile context closed; checking desktop toggle");
+    // Release the emulated phone's GPU context before independently testing
+    // the desktop renderer and its switch to/from optional virtual controls.
+    await browser.close();
+    browser = await chromium.launch({ headless: true, executablePath: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe" });
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    desktop.on("pageerror", (error) => errors.push(`desktop:${error.message}`));
+    desktop.on("console", (message) => { if (message.type() === "error") errors.push(`desktop:${message.text()}`); });
     await desktop.goto(target, { waitUntil: "networkidle" });
-    await desktop.waitForFunction(() => window.__megaChonk?.state.ready);
+    try {
+      await desktop.waitForFunction(() => window.__megaChonk?.state.ready, null, { timeout: 60000 });
+    } catch (error) {
+      console.error("Desktop boot diagnostics", { errors, status: await desktop.locator("#load-status").textContent() });
+      throw error;
+    }
+    if (requestedCharacter) assert.equal(await desktop.evaluate(() => window.__megaChonk.character.id), requestedCharacter);
     assert.equal((await desktop.evaluate(() => window.__megaChonk.touchSnapshot())).enabled, false);
     await desktop.click("#touch-toggle");
     await desktop.click("#enter-game");
@@ -257,9 +276,15 @@ const target = process.argv[2] || "http://127.0.0.1:4180/";
     await desktop.waitForFunction(() => document.pointerLockElement?.id === "game");
     const desktopBefore = await desktop.evaluate(() => window.__megaChonk.character.root.position.z);
     await desktop.keyboard.down("w");
-    await desktop.waitForTimeout(600);
-    await desktop.keyboard.up("w");
+    try {
+      // Resizing back to the desktop pixel ratio can compile coat shaders.
+      // Verify real keyboard travel rather than assuming 600 ms of frames.
+      await desktop.waitForFunction(before => window.__megaChonk.character.root.position.z < before - .6, desktopBefore, { timeout: 5000 });
+    } finally {
+      await desktop.keyboard.up("w");
+    }
     assert.ok(await desktop.evaluate(() => window.__megaChonk.character.root.position.z) < desktopBefore - 0.5, "Switching back to desktop input must restore keyboard play");
+    assert.deepEqual(errors, []);
     console.log(JSON.stringify({ target, bootLayouts, layouts, walkingSpeed: walking.speed, trottingSpeed: trotting.speed, cameraDelta: afterLook.yaw - beforeLook.yaw, simultaneousTouches: 3, pointerLockRequests: 0, desktopToggle: true, errors }, null, 2));
     console.log("Mobile touch controls passed");
   } finally {

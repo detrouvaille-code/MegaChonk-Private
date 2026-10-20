@@ -27,6 +27,7 @@ const captureScreenshot = require("./capture-screenshot");
     const modelVisual = await page.evaluate(() => ({
       ...window.__megaChonk.snapshot(),
       coatSelectors: document.querySelectorAll("[data-coat]").length,
+      characterOptions: [...document.querySelector("#character-select").options].map(option => option.value),
       modelName: window.__megaChonk.character.model?.name,
       bodyMaterial: (() => {
         let result = null;
@@ -156,7 +157,7 @@ const captureScreenshot = require("./capture-screenshot");
     if (modelVisual.animationClips !== 7) errors.push(`visual:expected 7 skeletal clips, got ${modelVisual.animationClips}`);
     if (modelVisual.skinnedMeshes < 1) errors.push("visual:model has no skinned meshes");
     if (modelVisual.bodyMaterial.brownPawVertices !== 0) errors.push(`visual:exported coat colors are scrambled on ${modelVisual.bodyMaterial.brownPawVertices} paw vertices`);
-    if (modelVisual.coat !== "van" || modelVisual.coatSelectors !== 0) errors.push("visual:Turkish Van was not the sole runtime coat");
+    if (modelVisual.coat !== "van" || modelVisual.coatSelectors !== 0 || modelVisual.characterOptions.join(",") !== "van,tactical-tabby") errors.push("visual:default Turkish Van or approved character choices are incorrect");
     if (modelVisual.modelName !== "TurkishVanSkinnedRig") errors.push(`visual:missing skinned runtime model, got ${modelVisual.modelName}`);
     if (Math.abs(heavyBlocked.position[1] - heavyBefore.position[1]) > 0.03 || heavyBlocked.jumpAllowed) errors.push("jump:heavy condition did not block the leap");
     if (hungryBlocked.position[1] > 0.03 || hungryBlocked.jumpAllowed) errors.push("jump:hunger condition did not block the leap");

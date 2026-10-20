@@ -14,6 +14,7 @@ MARKER = ".megachonk-build"
 STATIC_FILES = (
     "index.html", "styles.css", "credits.html",
     "assets/models/turkish-van-game-cat.glb",
+    "assets/models/tactical-tabby-game-cat.glb",
     "assets/models/source/jonas-dichelle-cat/ATTRIBUTION.md",
     "assets/models/source/jonas-dichelle-cat/LICENSE.html",
     "vendor/three/LICENSE",

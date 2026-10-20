@@ -1,0 +1,25 @@
+{
+  "sourceReopened": "tactical-tabby.blend",
+  "meshes": 156,
+  "bones": 11,
+  "packedReference": true,
+  "normalizedWeights": true,
+  "sampledMotionBounds": {
+    "Idle": {
+      "sampledMinZ": -5.662441182607836e-08,
+      "sampledMaxZ": 2.6695261001586914
+    },
+    "LookAround": {
+      "sampledMinZ": -5.662441182607836e-08,
+      "sampledMaxZ": 2.7651569843292236
+    },
+    "TailWag": {
+      "sampledMinZ": -5.662441182607836e-08,
+      "sampledMaxZ": 2.6695261001586914
+    },
+    "PawWave": {
+      "sampledMinZ": -5.662441182607836e-08,
+      "sampledMaxZ": 2.6695261001586914
+    }
+  }
+}

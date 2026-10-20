@@ -5,6 +5,10 @@ import * as THREE from "three";
 export function installChonkMorph(model) {
   const targets = [];
   model.traverse((mesh) => {
+    if (mesh.isSkinnedMesh && mesh.morphTargetDictionary?.Chonk !== undefined) {
+      targets.push(mesh);
+      return;
+    }
     if (!mesh.isSkinnedMesh || !/TurkishVan.*Body/.test(mesh.name)) return;
     const geometry = mesh.geometry;
     const position = geometry.attributes.position;
@@ -43,7 +47,7 @@ export function installChonkMorph(model) {
     targets,
     update(chonk, delta) {
       value = THREE.MathUtils.damp(value, THREE.MathUtils.clamp((chonk - 40) / 60, 0, 1), 5, delta);
-      for (const mesh of targets) mesh.morphTargetInfluences[0] = value;
+      for (const mesh of targets) mesh.morphTargetInfluences[mesh.morphTargetDictionary?.Chonk ?? 0] = value;
     },
     snapshot: () => ({ meshes: targets.length, influence: value }),
   };

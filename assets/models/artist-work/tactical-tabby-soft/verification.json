@@ -1,0 +1,27 @@
+{
+  "version": "2 - softer curved surfaces",
+  "blender": "3.4.1",
+  "meshes": 107,
+  "triangles": 222432,
+  "armatures": 1,
+  "skinnedMeshes": 107,
+  "clips": [
+    "Idle_TacticalTabby.Rig",
+    "LookAround_TacticalTabby.Rig",
+    "PawWave_TacticalTabby.Rig",
+    "TailWag_TacticalTabby.Rig"
+  ],
+  "sourceReference": "User supplied IMG_0664.jpg front / side / rear drawing",
+  "status": "Separate seated artist candidate; not integrated into gameplay",
+  "browserChecks": {
+    "engine": "Edge / Three.js",
+    "loadedSkinnedPrimitives": 109,
+    "allFourMotionsLoaded": true,
+    "sampledBoneTransformsFinite": true,
+    "viewAndTurntableControls": true,
+    "phoneViewport": "390x844, no horizontal overflow",
+    "browserErrors": []
+  },
+  "originalVersionHashesUnchanged": true,
+  "sourceReopenPassed": true
+}
